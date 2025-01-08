@@ -1,5 +1,6 @@
 import React from 'react';
 import { UserIcon } from 'lucide-react';
+import { Feature } from '@/types';
 
 export const Features: React.FC = () => {
     const features: Feature[] = [

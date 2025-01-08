@@ -1,15 +1,15 @@
-interface NavItem {
+export interface NavItem {
     label: string;
     href: string;
   }
   
-  interface Feature {
+export interface Feature {
     icon: React.ReactNode;
     title: string;
     description: string;
   }
   
-  interface PricingTier {
+export interface PricingTier {
     name: string;
     price: number;
     description: string;
@@ -18,7 +18,7 @@ interface NavItem {
     buttonText: string;
   }
   
-  interface FooterSection {
+export interface FooterSection {
     title: string;
     links: Array<{
       label: string;

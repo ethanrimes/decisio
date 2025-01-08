@@ -1,5 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
+import { NavItem } from '@/types';
+
 
 export const Header: React.FC = () => {
   const navItems: NavItem[] = [

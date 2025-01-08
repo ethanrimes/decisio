@@ -1,3 +1,5 @@
+import { FooterSection } from '@/types';
+
 export const Footer: React.FC = () => {
     const sections: FooterSection[] = [
       {
