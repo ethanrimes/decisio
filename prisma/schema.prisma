@@ -49,6 +49,9 @@ model User {
   image         String?
   accounts      Account[]
   sessions      Session[]
+  topics        Topic[]
+  options       Option[]
+  tiles         Tile[]
 }
 
 model VerificationToken {
@@ -57,4 +60,67 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model Option {
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+  fitReasons  String?
+  createdAt   DateTime  @default(now())
+  status      String    // 'rejected', 'accepted', 'pending'
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  topicId     String
+  topic       Topic     @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([topicId])
+}
+
+model Tile {
+  id           String    @id @default(uuid())
+  content      String
+  createdAt    DateTime  @default(now())
+  modifiedAt   DateTime  @updatedAt
+  sectionIndex Int
+  userId       String
+  user         User      @relation(fields: [userId], references: [id])
+  topicId      String
+  topic        Topic     @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([topicId])
+}
+
+model Topic {
+  id            String    @id @default(uuid())
+  fullName      String
+  shortName     String?
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  lastMessageAt DateTime  @default(now())
+  solved        Boolean   @default(false)
+  sectionNames  String[]  // Prisma supports string arrays natively
+  options       Option[]
+  tiles         Tile[]
+  messages      Message[]
+
+  @@index([userId])
+  @@index([lastMessageAt])
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  content   String
+  role      String   // 'u' for user or 'a' for assistant
+  topicId   String
+  topic     Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  metadata  Json?
+
+  @@index([topicId])
+  @@index([createdAt])
 }

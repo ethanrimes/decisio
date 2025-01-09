@@ -93,3 +93,9 @@ export interface OptionSummaryProps {
     value: string
   }[]
 }
+
+export interface NewDecisionPopupProps {
+  isOpen: boolean
+  onClose: () => void
+  onSubmit: (decision: string) => void
+}
