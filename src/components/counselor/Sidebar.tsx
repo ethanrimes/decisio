@@ -16,11 +16,11 @@ export function DashboardSidebar({ isOpen, onToggle }: SidebarProps) {
 
   return (
     <div className={cn(
-      'bg-white border-r transition-all duration-300',
-      isOpen ? 'w-64' : 'w-0'
+      'bg-white border-r transition-all duration-300 overflow-hidden',
+      isOpen ? 'w-64' : 'w-0 hidden'
     )}>
       <div className="h-16 flex items-center justify-between px-4 border-b">
-        <h1 className="font-semibold text-xl">Decisio</h1>
+        <h1 className="font-semibold text-xl">Dashboard</h1>
         <button onClick={onToggle} className="p-1 hover:bg-gray-100 rounded-md">
           <ChevronLeft className="h-5 w-5" />
         </button>

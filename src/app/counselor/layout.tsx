@@ -12,7 +12,7 @@ export default function CounselorLayout({
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-white">
       <DashboardSidebar 
         isOpen={isSidebarOpen} 
         onToggle={() => setIsSidebarOpen(!isSidebarOpen)} 
@@ -22,9 +22,9 @@ export default function CounselorLayout({
           isSidebarOpen={isSidebarOpen} 
           onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} 
         />
-        <main className="flex-1 overflow-auto p-6">
+        <div className="flex-1 overflow-hidden">
           {children}
-        </main>
+        </div>
       </div>
     </div>
   )
