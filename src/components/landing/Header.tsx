@@ -1,9 +1,19 @@
-import React from 'react';
+'use client'
+
+import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { NavItem } from '@/types';
-
+import Link from 'next/link';
+import { useSession } from 'next-auth/react';
+import Image from 'next/image';
 
 export const Header: React.FC = () => {
+  const { data: session } = useSession();
+  
+  useEffect(() => {
+    console.log('Current session user:', session?.user);
+  }, [session]);
+
   const navItems: NavItem[] = [
     { label: 'Features', href: '#features' },
     { label: 'Pricing', href: '#pricing' },
@@ -33,10 +43,21 @@ export const Header: React.FC = () => {
             </Button>
           ))}
           <div className="flex items-center gap-3">
-            {/* <Button variant="outline" className="flex items-center gap-2">
-              Dashboard
-            </Button> */}
-            <Button>Sign In</Button>
+            {session?.user ? (
+              <Link href="/profile">
+                <Image
+                  src={session.user.image || ''}
+                  alt="Profile"
+                  width={32}
+                  height={32}
+                  className="rounded-full cursor-pointer hover:opacity-80 transition-opacity"
+                />
+              </Link>
+            ) : (
+              <Link href="/auth/login">
+                <Button>Sign In</Button>
+              </Link>
+            )}
           </div>
         </div>
       </nav>
