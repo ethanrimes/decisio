@@ -97,6 +97,7 @@ model Topic {
   id            String    @id @default(uuid())
   fullName      String
   shortName     String?
+  icon          String    @default("Goal") // New field added with default value
   userId        String
   user          User      @relation(fields: [userId], references: [id])
   createdAt     DateTime  @default(now())

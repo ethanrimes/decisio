@@ -6,15 +6,77 @@ import { NewDecisionPopupProps } from '@/types'
 
 export function NewDecisionPopup({ isOpen, onClose, onSubmit }: NewDecisionPopupProps) {
   const [decision, setDecision] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
 
   if (!isOpen) return null
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (decision.trim()) {
-      onSubmit(decision)
-      setDecision('')
-      onClose()
+      setIsLoading(true)
+      try {
+        // Get OpenAI response
+        const aiResponse = await fetch('/api/openai/create-topic', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ text: decision }),
+        })
+
+        const data = await aiResponse.json()
+        console.log('OpenAI response:', data)
+        if (!aiResponse.ok) throw new Error(data.error)
+
+        // Validate Lucide icon
+        console.log('Using icon:', data.iconName)
+
+        // Create topic in database
+        const topicResponse = await fetch('/api/counselor/topic/post', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            fullName: decision,
+            shortName: data.summary,
+            icon: data.iconName,
+          }),
+        })
+
+        console.log('Topic response status:', topicResponse.status)
+        const topicData = await topicResponse.json()
+        console.log('Topic response data:', topicData)
+
+        if (!topicResponse.ok) {
+          throw new Error(topicData.error || 'Failed to create topic')
+        }
+
+        // // Update the topic's image using PATCH
+        // const patchResponse = await fetch('/api/counselor/topic/patch', {
+        //   method: 'PATCH',
+        //   headers: {
+        //     'Content-Type': 'application/json',
+        //   },
+        //   body: JSON.stringify({
+        //     topicId: topicData.id,
+        //     icon: data.iconName,
+        //   }),
+        // })
+
+        // if (!patchResponse.ok) {
+        //   console.error('Failed to update topic icon')
+        // }
+
+        onSubmit(decision, data.summary, data.iconName)
+        setDecision('')
+        onClose()
+      } catch (error) {
+        console.error('Detailed error:', error)
+        // Handle error (you might want to show an error message to the user)
+      } finally {
+        setIsLoading(false)
+      }
     }
   }
 
@@ -48,9 +110,9 @@ export function NewDecisionPopup({ isOpen, onClose, onSubmit }: NewDecisionPopup
             <button
               type="submit"
               className="px-6 py-3 text-lg bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-              disabled={!decision.trim()}
+              disabled={!decision.trim() || isLoading}
             >
-              Consult
+              {isLoading ? 'Processing...' : 'Consult'}
             </button>
           </div>
         </form>

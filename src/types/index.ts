@@ -95,7 +95,15 @@ export interface OptionSummaryProps {
 }
 
 export interface NewDecisionPopupProps {
-  isOpen: boolean
-  onClose: () => void
-  onSubmit: (decision: string) => void
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (decision: string, summary: string, iconName: string) => void;
+}
+
+export type UpdateableTopicFields = {
+  fullName?: string
+  shortName?: string
+  icon?: string
+  sectionNames?: string[]
+  solved?: boolean
 }
