@@ -2,7 +2,6 @@
 
 import { ChevronLeft } from 'lucide-react'
 import * as LucideIcons from 'lucide-react'
-import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { SidebarProps } from '@/types'
 
@@ -23,7 +22,6 @@ export function DashboardSidebar({
     id: topic.id,
     icon: getIconComponent(topic.icon),
     label: topic.shortName || topic.fullName,
-    href: `/counselor/${topic.id}`
   })) || []
 
   return (
@@ -40,12 +38,11 @@ export function DashboardSidebar({
 
       <nav className="p-4 space-y-2">
         {topicNavItems.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
+          <button
+            key={item.id}
             onClick={() => onTopicSelect(item.id)}
             className={cn(
-              'flex items-center space-x-2 px-3 py-2 rounded-md transition-colors',
+              'flex items-center space-x-2 px-3 py-2 rounded-md transition-colors w-full text-left',
               selectedTopicId === item.id
                 ? 'bg-gray-800 text-white'
                 : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
@@ -53,7 +50,7 @@ export function DashboardSidebar({
           >
             <item.icon className="h-5 w-5" />
             <span>{item.label}</span>
-          </Link>
+          </button>
         ))}
       </nav>
     </div>
