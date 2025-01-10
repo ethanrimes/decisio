@@ -12,22 +12,73 @@ declare module 'next-auth' {
   }
 }
 
-// Basic NavItem without icon
-export interface NavItem {
-  label: string
-  href: string
+// Database Model Interfaces
+export interface User {
+  id: string
+  name: string | null
+  email: string | null
+  emailVerified: Date | null
+  image: string | null
+  createdAt: Date
+  updatedAt: Date
+  topics: Topic[]
 }
 
-// Extended NavItem with icon
-export interface NavItemIcon extends NavItem {
-  icon: LucideIcon
+export interface Topic {
+  id: string
+  fullName: string
+  shortName: string | null
+  icon: string
+  createdAt: Date
+  updatedAt: Date
+  userId: string
+  user: User
+  options: Option[]
+  tiles: Tile[]
+  messages: Message[]
+  sectionNames: string[]
+  solved: boolean
+}
+
+export interface Option {
+  id: string
+  name: string
+  description: string | null
+  status: string
+  createdAt: Date
+  updatedAt: Date
+  topicId: string
+  topic: Topic
+}
+
+export interface Tile {
+  id: string
+  content: string
+  sectionIndex: number
+  createdAt: Date
+  updatedAt: Date
+  topicId: string
+  topic: Topic
 }
 
 export interface Message {
   id: string
   content: string
-  sender: 'user' | 'bot'
-  timestamp: Date
+  role: string
+  createdAt: Date
+  topicId: string
+  topic: Topic
+  metadata: any
+}
+
+// Component Props Interfaces (keeping your existing interfaces)
+export interface NavItem {
+  label: string
+  href: string
+}
+
+export interface NavItemIcon extends NavItem {
+  icon: LucideIcon
 }
 
 export interface TileProps {
@@ -46,13 +97,13 @@ export interface TileSectionProps {
     content: string
   }>
 }
-  
+
 export interface Feature {
   icon: React.ReactNode
   title: string
   description: string
 }
-  
+
 export interface PricingTier {
   name: string
   price: number
@@ -61,7 +112,7 @@ export interface PricingTier {
   isPopular?: boolean
   buttonText: string
 }
-  
+
 export interface FooterSection {
   title: string
   links: Array<{
@@ -69,10 +120,13 @@ export interface FooterSection {
     href: string
   }>
 }
-  
+
 export interface SidebarProps {
   isOpen: boolean
   onToggle: () => void
+  topics: Topic[]
+  selectedTopicId: string | null
+  onTopicSelect: (topicId: string) => void
 }
 
 export interface HeaderProps {
@@ -95,9 +149,9 @@ export interface OptionSummaryProps {
 }
 
 export interface NewDecisionPopupProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmit: (decision: string, summary: string, iconName: string) => void;
+  isOpen: boolean
+  onClose: () => void
+  onSubmit: (decision: string, summary: string, iconName: string) => void
 }
 
 export type UpdateableTopicFields = {
@@ -106,4 +160,8 @@ export type UpdateableTopicFields = {
   icon?: string
   sectionNames?: string[]
   solved?: boolean
+}
+
+export interface PageProps {
+  selectedTopic: Topic | null
 }

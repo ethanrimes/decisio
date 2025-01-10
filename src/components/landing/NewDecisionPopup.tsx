@@ -52,22 +52,6 @@ export function NewDecisionPopup({ isOpen, onClose, onSubmit }: NewDecisionPopup
           throw new Error(topicData.error || 'Failed to create topic')
         }
 
-        // // Update the topic's image using PATCH
-        // const patchResponse = await fetch('/api/counselor/topic/patch', {
-        //   method: 'PATCH',
-        //   headers: {
-        //     'Content-Type': 'application/json',
-        //   },
-        //   body: JSON.stringify({
-        //     topicId: topicData.id,
-        //     icon: data.iconName,
-        //   }),
-        // })
-
-        // if (!patchResponse.ok) {
-        //   console.error('Failed to update topic icon')
-        // }
-
         onSubmit(decision, data.summary, data.iconName)
         setDecision('')
         onClose()

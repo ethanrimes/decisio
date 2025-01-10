@@ -5,6 +5,7 @@ import { NotesHeader } from '@/components/counselor/NotesHeader'
 import { TileSection } from '@/components/counselor/TileSection'
 import { OptionSummary } from '@/components/counselor/OptionSummary'
 import { Chat } from '@/components/counselor/Chat'
+import { PageProps, Topic } from '@/types'
 
 const sections = [
   {
@@ -87,7 +88,7 @@ const optionSummaries = [
   }
 ]
 
-export default function CounselorPage() {
+export default function CounselorPage({ selectedTopic }: PageProps) {
   const [activeView, setActiveView] = useState<'details' | 'options'>('details')
 
   return (
@@ -99,6 +100,9 @@ export default function CounselorPage() {
           onViewChange={setActiveView}
         />
         <div className="p-6">
+          {selectedTopic && (
+            <h1 className="text-2xl font-bold mb-6">{selectedTopic.fullName}</h1>
+          )}
           {/* Details View */}
           <div className={`${activeView === 'details' ? 'block' : 'hidden'}`}>
             <div className="space-y-8 h-[calc(100vh-10rem)] overflow-y-auto">
