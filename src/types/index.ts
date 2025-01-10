@@ -124,9 +124,6 @@ export interface FooterSection {
 export interface SidebarProps {
   isOpen: boolean
   onToggle: () => void
-  topics: Topic[]
-  selectedTopicId: string | null
-  onTopicSelect: (topicId: string) => void
 }
 
 export interface HeaderProps {
@@ -164,4 +161,19 @@ export type UpdateableTopicFields = {
 
 export interface PageProps {
   selectedTopic: Topic | null
+}
+
+export interface IconProps {
+  iconName: string
+  size?: number
+  color?: string
+}
+
+export interface TopicContextType {
+  selectedTopic: Topic | null
+  setSelectedTopic: (topic: Topic | null) => void
+  topics: Topic[]
+  setTopics: (topics: Topic[]) => void
+  isLoading: boolean
+  error: string | null
 }

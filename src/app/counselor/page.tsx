@@ -5,7 +5,7 @@ import { NotesHeader } from '@/components/counselor/NotesHeader'
 import { TileSection } from '@/components/counselor/TileSection'
 import { OptionSummary } from '@/components/counselor/OptionSummary'
 import { Chat } from '@/components/counselor/Chat'
-import { PageProps, Topic } from '@/types'
+import { useTopicContext } from '@/app/counselor/context/TopixContext'
 
 const sections = [
   {
@@ -88,57 +88,54 @@ const optionSummaries = [
   }
 ]
 
-export default function CounselorPage({ selectedTopic }: PageProps) {
+export default function CounselorPage() {
   const [activeView, setActiveView] = useState<'details' | 'options'>('details')
 
   return (
-    <div className="flex h-full">
-      {/* Main content area (2/3) */}
-      <div className="w-2/3 bg-white overflow-auto">
-        <NotesHeader 
-          activeView={activeView}
-          onViewChange={setActiveView}
-        />
-        <div className="p-6">
-          {selectedTopic && (
-            <h1 className="text-2xl font-bold mb-6">{selectedTopic.fullName}</h1>
-          )}
-          {/* Details View */}
-          <div className={`${activeView === 'details' ? 'block' : 'hidden'}`}>
-            <div className="space-y-8 h-[calc(100vh-10rem)] overflow-y-auto">
-              {sections.map((section) => (
-                <TileSection
-                  key={section.id}
-                  title={section.title}
-                  category={section.category}
-                  tiles={section.tiles}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Options View */}
-          <div className={`${activeView === 'options' ? 'block' : 'hidden'}`}>
-            <div className="h-[calc(100vh-10rem)] overflow-y-auto">
-              <div className="grid grid-cols-3 gap-6">
-                {optionSummaries.map((option, index) => (
-                  <OptionSummary
-                    key={index}
-                    title={option.title}
-                    description={option.description}
-                    metrics={option.metrics}
+      <div className="flex h-full">
+        <div className="w-2/3 bg-white overflow-auto">
+          <NotesHeader 
+            activeView={activeView}
+            onViewChange={setActiveView}
+          />
+          <div className="p-6">
+            {/* Details View */}
+            <div className={`${activeView === 'details' ? 'block' : 'hidden'}`}>
+              <div className="space-y-8 h-[calc(100vh-10rem)] overflow-y-auto">
+                {sections.map((section) => (
+                  <TileSection
+                    key={section.id}
+                    title={section.title}
+                    category={section.category}
+                    tiles={section.tiles}
                   />
                 ))}
               </div>
             </div>
+
+            {/* Options View */}
+            <div className={`${activeView === 'options' ? 'block' : 'hidden'}`}>
+              <div className="h-[calc(100vh-10rem)] overflow-y-auto">
+                <div className="grid grid-cols-3 gap-6">
+                  {optionSummaries.map((option, index) => (
+                    <OptionSummary
+                      key={index}
+                      title={option.title}
+                      description={option.description}
+                      metrics={option.metrics}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
+        </div>
+
+        {/* Right sidebar with chat (1/3) */}
+        <div className="w-1/3 bg-gray-50 border-l">
+          <Chat />
         </div>
       </div>
 
-      {/* Right sidebar with chat (1/3) */}
-      <div className="w-1/3 bg-gray-50 border-l">
-        <Chat />
-      </div>
-    </div>
   )
 }

@@ -1,28 +1,17 @@
 'use client'
 
 import { ChevronLeft } from 'lucide-react'
-import * as LucideIcons from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { SidebarProps } from '@/types'
+import { SidebarProps, Topic } from '@/types'
+import { useTopicContext } from '@/app/counselor/context/TopixContext'
+import Icon from './IconComponent'
 
-export function DashboardSidebar({ 
-  isOpen, 
-  onToggle, 
-  topics, 
-  selectedTopicId,
-  onTopicSelect 
-}: SidebarProps) {
+export function DashboardSidebar({ isOpen, onToggle }: SidebarProps) {
+  const { topics, selectedTopic, setSelectedTopic } = useTopicContext()
 
-  const getIconComponent = (iconName: string) => {
-    const formattedIconName = iconName.charAt(0).toUpperCase() + iconName.slice(1)
-    return (LucideIcons as any)[formattedIconName] || LucideIcons.HelpCircle
+  const handleTopicSelect = (topic: Topic) => {
+    setSelectedTopic(topic)
   }
-
-  const topicNavItems = topics?.map(topic => ({
-    id: topic.id,
-    icon: getIconComponent(topic.icon),
-    label: topic.shortName || topic.fullName,
-  })) || []
 
   return (
     <div className={cn(
@@ -37,19 +26,23 @@ export function DashboardSidebar({
       </div>
 
       <nav className="p-4 space-y-2">
-        {topicNavItems.map((item) => (
+        {topics.map((topic) => (
           <button
-            key={item.id}
-            onClick={() => onTopicSelect(item.id)}
+            key={topic.id}
+            onClick={() => handleTopicSelect(topic)}
             className={cn(
               'flex items-center space-x-2 px-3 py-2 rounded-md transition-colors w-full text-left',
-              selectedTopicId === item.id
+              selectedTopic?.id === topic.id
                 ? 'bg-gray-800 text-white'
                 : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
             )}
           >
-            <item.icon className="h-5 w-5" />
-            <span>{item.label}</span>
+            <Icon 
+              iconName={topic.icon} 
+              size={20}
+              color={selectedTopic?.id === topic.id ? 'white' : 'currentColor'}
+            />
+            <span>{topic.shortName || topic.fullName}</span>
           </button>
         ))}
       </nav>
