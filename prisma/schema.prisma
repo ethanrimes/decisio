@@ -80,10 +80,10 @@ model Option {
 
 model Tile {
   id           String    @id @default(uuid())
-  content      String
+  content      String[]
+  sectionName  String
   createdAt    DateTime  @default(now())
   modifiedAt   DateTime  @updatedAt
-  sectionIndex Int
   userId       String
   user         User      @relation(fields: [userId], references: [id])
   topicId      String
@@ -97,14 +97,13 @@ model Topic {
   id            String    @id @default(uuid())
   fullName      String
   shortName     String?
-  icon          String    @default("Goal") // New field added with default value
+  icon          String    @default("Goal")
   userId        String
   user          User      @relation(fields: [userId], references: [id])
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   lastMessageAt DateTime  @default(now())
   solved        Boolean   @default(false)
-  sectionNames  String[]  // Prisma supports string arrays natively
   options       Option[]
   tiles         Tile[]
   messages      Message[]

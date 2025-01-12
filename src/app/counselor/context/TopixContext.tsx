@@ -1,7 +1,7 @@
 'use client'
 
 import React, { createContext, useContext, useState, useEffect } from 'react'
-import { Topic, TopicContextType } from '@/types'
+import { Topic, Tile, TopicContextType } from '@/types'
 
 const TopicContext = createContext<TopicContextType | undefined>(undefined)
 
@@ -16,48 +16,70 @@ export function useTopicContext() {
 export function TopicProvider({ children }: { children: React.ReactNode }) {
   const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null)
   const [topics, setTopics] = useState<Topic[]>([])
+  const [tiles, setTiles] = useState<Tile[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const fetchTopics = async () => {
+    try {
+      const response = await fetch('/api/counselor/topic/get')
+      if (!response.ok) {
+        throw new Error('Failed to fetch topics')
+      }
+      const data = await response.json()
+      setTopics(data)
+      // Set the first topic as selected if there are topics and none is selected
+      if (data.length > 0 && !selectedTopic) {
+        setSelectedTopic(data[0])
+      }
+      return data[0] // Return first topic for chaining
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load topics')
+      console.error('Error fetching topics:', err)
+      return null
+    }
+  }
+
+  const fetchTiles = async (topicId: string) => {
+    try {
+      const response = await fetch(`/api/counselor/tile/get?topicId=${topicId}`)
+      if (!response.ok) {
+        throw new Error('Failed to fetch tiles')
+      }
+      const data = await response.json()
+      setTiles(data)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load tiles')
+      console.error('Error fetching tiles:', err)
+    }
+  }
+
+  // Combined fetch operation
   useEffect(() => {
-    const fetchTopics = async () => {
+    const fetchData = async () => {
+      setIsLoading(true)
       try {
-        const response = await fetch('/api/counselor/topic/get')
-        if (!response.ok) {
-          throw new Error('Failed to fetch topics')
+        const firstTopic = await fetchTopics()
+        if (firstTopic) {
+          await fetchTiles(firstTopic.id)
         }
-        const data = await response.json()
-        setTopics(data)
-        // Set the first topic as selected if there are topics and none is selected
-        if (data.length > 0 && !selectedTopic) {
-          setSelectedTopic(data[0])
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load topics')
-        console.error('Error fetching topics:', err)
       } finally {
         setIsLoading(false)
       }
     }
 
-    fetchTopics()
-  }, [selectedTopic])
+    fetchData()
+  }, []) // Only runs on mount
 
-  if (isLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-gray-900"></div>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="flex h-screen items-center justify-center text-red-500">
-        Error: {error}
-      </div>
-    )
-  }
+  // Update tiles when selected topic changes (but not on initial mount)
+  useEffect(() => {
+    if (selectedTopic) {
+      setIsLoading(true)
+      fetchTiles(selectedTopic.id).finally(() => setIsLoading(false))
+    } else {
+      setTiles([])
+    }
+  }, [selectedTopic?.id]) // Only depends on selectedTopic.id
 
   return (
     <TopicContext.Provider value={{ 
@@ -65,8 +87,12 @@ export function TopicProvider({ children }: { children: React.ReactNode }) {
       setSelectedTopic,
       topics,
       setTopics,
+      tiles,
+      setTiles,
       isLoading,
-      error 
+      error,
+      fetchTopics,
+      fetchTiles: () => selectedTopic ? fetchTiles(selectedTopic.id) : Promise.resolve()
     }}>
       {children}
     </TopicContext.Provider>

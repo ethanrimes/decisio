@@ -36,7 +36,6 @@ export interface Topic {
   options: Option[]
   tiles: Tile[]
   messages: Message[]
-  sectionNames: string[]
   solved: boolean
 }
 
@@ -53,12 +52,11 @@ export interface Option {
 
 export interface Tile {
   id: string
-  content: string
-  sectionIndex: number
+  content: string[]
+  sectionName: string
+  topicId: string
   createdAt: Date
   updatedAt: Date
-  topicId: string
-  topic: Topic
 }
 
 export interface Message {
@@ -68,7 +66,7 @@ export interface Message {
   createdAt: Date
   topicId: string
   topic: Topic
-  metadata: any
+  metadata: string
 }
 
 // Component Props Interfaces (keeping your existing interfaces)
@@ -82,20 +80,13 @@ export interface NavItemIcon extends NavItem {
 }
 
 export interface TileProps {
-  title: string
-  content: string
-  category: 'goals' | 'preferences' | 'options' | 'constraints'
+  id: string
+  content: string[]
   onDelete?: () => void
 }
 
 export interface TileSectionProps {
-  title: string
-  category: 'goals' | 'preferences' | 'options' | 'constraints'
-  tiles: Array<{
-    id: string
-    title: string
-    content: string
-  }>
+  tile: Tile
 }
 
 export interface Feature {
@@ -174,6 +165,16 @@ export interface TopicContextType {
   setSelectedTopic: (topic: Topic | null) => void
   topics: Topic[]
   setTopics: (topics: Topic[]) => void
+  tiles: Tile[]
+  setTiles: (tiles: Tile[]) => void
   isLoading: boolean
   error: string | null
+  fetchTopics: () => Promise<void>
+  fetchTiles: () => Promise<void>
+}
+
+export interface AddTilePopupProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (data: { sectionName: string; content: string[] }) => void;
 }

@@ -5,58 +5,8 @@ import { NotesHeader } from '@/components/counselor/NotesHeader'
 import { TileSection } from '@/components/counselor/TileSection'
 import { OptionSummary } from '@/components/counselor/OptionSummary'
 import { Chat } from '@/components/counselor/Chat'
-import { useTopicContext } from '@/app/counselor/context/TopixContext'
-
-const sections = [
-  {
-    id: 'goals',
-    title: 'Goals (what do you want to achieve)',
-    category: 'goals' as const,
-    tiles: [
-      {
-        id: 'g1',
-        title: 'Career Growth',
-        content: 'Achieve senior position within 2 years'
-      }
-    ]
-  },
-  {
-    id: 'preferences',
-    title: 'Preferences (how do you want to achieve it)',
-    category: 'preferences' as const,
-    tiles: [
-      {
-        id: 'p1',
-        title: 'Work-Life Balance',
-        content: 'Remote work opportunities preferred'
-      }
-    ]
-  },
-  {
-    id: 'options',
-    title: 'Options (what can you choose from)',
-    category: 'options' as const,
-    tiles: [
-      {
-        id: 'o1',
-        title: 'Company Types',
-        content: 'Tech startups, Enterprise companies, Consulting firms'
-      }
-    ]
-  },
-  {
-    id: 'constraints',
-    title: 'Constraints (what limitations you have on options)',
-    category: 'constraints' as const,
-    tiles: [
-      {
-        id: 'c1',
-        title: 'Location',
-        content: 'Must be within EST timezone'
-      }
-    ]
-  }
-]
+import { useTopicContext } from './context/TopixContext'
+import { AddTilePopup } from '@/components/counselor/AddTilePopup'
 
 const optionSummaries = [
   {
@@ -90,52 +40,99 @@ const optionSummaries = [
 
 export default function CounselorPage() {
   const [activeView, setActiveView] = useState<'details' | 'options'>('details')
+  const { tiles, isLoading, error, fetchTiles, selectedTopic } = useTopicContext()
+  const [isAddTileOpen, setIsAddTileOpen] = useState(false)
+
+  const handleAddTile = async ({ sectionName, content }: { sectionName: string, content: string[] }) => {
+    try {
+      const response = await fetch('/api/counselor/tile/post', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sectionName,
+          content,
+          topicId: selectedTopic?.id,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to create tile')
+      }
+
+      await fetchTiles()
+    } catch (error) {
+      console.error('Error creating tile:', error)
+    }
+  }
 
   return (
-      <div className="flex h-full">
-        <div className="w-2/3 bg-white overflow-auto">
+    <div className="flex h-full">
+      <div className="w-2/3 bg-white overflow-auto">
+        {/* Removed the extra flex justify-between containers that were constraining width */}
+        <div className="w-full">
           <NotesHeader 
             activeView={activeView}
             onViewChange={setActiveView}
           />
-          <div className="p-6">
-            {/* Details View */}
-            <div className={`${activeView === 'details' ? 'block' : 'hidden'}`}>
-              <div className="space-y-8 h-[calc(100vh-10rem)] overflow-y-auto">
-                {sections.map((section) => (
+          <div className="px-6">
+            <button
+              onClick={() => setIsAddTileOpen(true)}
+              className="mt-2 py-2 px-4 bg-indigo-500 text-white rounded-md hover:bg-indigo-600"
+            >
+              Add Tile
+            </button>
+          </div>
+        </div>
+
+        <div className="p-6">
+          {/* Details View */}
+          <div className={`${activeView === 'details' ? 'block' : 'hidden'}`}>
+            <div className="space-y-8 h-[calc(100vh-10rem)] overflow-y-auto">
+              {isLoading ? (
+                <div>Loading tiles...</div>
+              ) : error ? (
+                <div>Error: {error}</div>
+              ) : (
+                tiles.map((tile) => (
                   <TileSection
-                    key={section.id}
-                    title={section.title}
-                    category={section.category}
-                    tiles={section.tiles}
+                    key={tile.id}
+                    tile={tile}
+                  />
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Options View */}
+          <div className={`${activeView === 'options' ? 'block' : 'hidden'}`}>
+            <div className="h-[calc(100vh-10rem)] overflow-y-auto">
+              <div className="grid grid-cols-3 gap-6">
+                {optionSummaries.map((option, index) => (
+                  <OptionSummary
+                    key={index}
+                    title={option.title}
+                    description={option.description}
+                    metrics={option.metrics}
                   />
                 ))}
               </div>
             </div>
-
-            {/* Options View */}
-            <div className={`${activeView === 'options' ? 'block' : 'hidden'}`}>
-              <div className="h-[calc(100vh-10rem)] overflow-y-auto">
-                <div className="grid grid-cols-3 gap-6">
-                  {optionSummaries.map((option, index) => (
-                    <OptionSummary
-                      key={index}
-                      title={option.title}
-                      description={option.description}
-                      metrics={option.metrics}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
           </div>
-        </div>
-
-        {/* Right sidebar with chat (1/3) */}
-        <div className="w-1/3 bg-gray-50 border-l">
-          <Chat />
         </div>
       </div>
 
-  )
+      {/* Right sidebar with chat (1/3) */}
+      <div className="w-1/3 bg-gray-50 border-l">
+        <Chat />
+      </div>
+
+      <AddTilePopup
+        isOpen={isAddTileOpen}
+        onClose={() => setIsAddTileOpen(false)}
+        onSubmit={handleAddTile}
+      />
+    </div>
+    )
 }

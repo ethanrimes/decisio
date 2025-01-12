@@ -33,7 +33,6 @@ export async function PATCH(request: Request) {
     if ('fullName' in updateFields) validUpdateFields.fullName = updateFields.fullName
     if ('shortName' in updateFields) validUpdateFields.shortName = updateFields.shortName
     if ('icon' in updateFields) validUpdateFields.icon = updateFields.icon
-    if ('sectionNames' in updateFields) validUpdateFields.sectionNames = updateFields.sectionNames
     if ('solved' in updateFields) validUpdateFields.solved = updateFields.solved
 
     console.log('Updating topic with fields:', validUpdateFields)

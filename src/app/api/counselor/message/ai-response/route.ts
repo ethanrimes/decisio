@@ -2,12 +2,9 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getCurrentUser } from '@/lib/auth'
 
-export async function PATCH(request: Request) {
+export async function POST(request: Request) {
   try {
-    console.log('PATCH route started')
     const user = await getCurrentUser()
-    console.log('Current user:', user)
-
     if (!user || !user.id) {
       return new NextResponse(JSON.stringify({ error: 'Unauthorized' }), { 
         status: 401,
@@ -15,33 +12,25 @@ export async function PATCH(request: Request) {
       })
     }
 
-    const rawBody = await request.text()
-    console.log('Raw request body:', rawBody)
+    const { topicId } = await request.json()
 
-    const body = JSON.parse(rawBody)
-    console.log('Parsed body:', body)
-
-    const { id, content } = body
-    console.log('Extracted id:', id, 'content:', content)
-
-    const updatedTile = await prisma.tile.update({
-      where: {
-        id,
-        userId: user.id,
-      },
+    // Create and save bot response
+    const botResponse = await prisma.message.create({
       data: {
-        content,
+        content: "I'm analyzing your input and will provide guidance shortly...",
+        role: 'a',
+        topicId,
       }
     })
 
-    return new NextResponse(JSON.stringify(updatedTile), {
+    return new NextResponse(JSON.stringify(botResponse), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     })
   } catch (error) {
-    console.error('Failed to update tile:', error)
+    console.error('Failed to create AI response:', error)
     return new NextResponse(JSON.stringify({ 
-      error: 'Failed to update tile',
+      error: 'Failed to create AI response',
       details: error instanceof Error ? error.message : 'Unknown error'
     }), { 
       status: 500,

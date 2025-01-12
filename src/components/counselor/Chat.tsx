@@ -12,19 +12,46 @@ type SpeechRecognition = any;
 import { useState, useEffect } from 'react'
 import { Send, Mic, MicOff } from 'lucide-react'
 import { Message } from '@/types'
+import { useTopicContext } from '@/app/counselor/context/TopixContext'
 
 export function Chat() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      content: "Hello! I'm your AI counselor. How can I help you today?",
-      sender: 'bot',
-      timestamp: new Date()
-    }
-  ])
+  const { selectedTopic } = useTopicContext()
+  const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isListening, setIsListening] = useState(false)
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [isSpeechSupported, setIsSpeechSupported] = useState(false)
+
+  useEffect(() => {
+    // Check for speech recognition support
+    setIsSpeechSupported(
+      typeof window !== 'undefined' && 'webkitSpeechRecognition' in window
+    )
+  }, [])
+
+  useEffect(() => {
+    const fetchMessages = async () => {
+      if (!selectedTopic) {
+        setMessages([])
+        return
+      }
+
+      setIsLoading(true)
+      try {
+        const response = await fetch(`/api/counselor/message/get?topicId=${selectedTopic.id}`)
+        if (!response.ok) throw new Error('Failed to fetch messages')
+        const data = await response.json()
+        setMessages(data)
+      } catch (err) {
+        console.error('Error fetching messages:', err)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchMessages()
+  }, [selectedTopic])
 
   // Initialize speech recognition
   useEffect(() => {
@@ -65,29 +92,59 @@ export function Chat() {
     }
   }
 
-  const handleSend = () => {
-    if (!input.trim()) return
+  const handleSend = async () => {
+    if (!input.trim() || !selectedTopic) return
 
     const newMessage: Message = {
       id: Date.now().toString(),
       content: input,
-      sender: 'user',
-      timestamp: new Date()
+      role: 'u',
+      topicId: selectedTopic.id,
+      createdAt: new Date(),
+      metadata: null
     }
 
-    setMessages(prev => [...prev, newMessage])
-    setInput('')
+    try {
+      // Post the message to the database
+      setMessages(prev => [...prev, newMessage])
+      setInput('')
+      const response = await fetch('/api/counselor/message/post', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: input,
+          role: 'u',
+          topicId: selectedTopic.id,
+        }),
+      })
 
-    // Simulate bot response
-    setTimeout(() => {
-      const botResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        content: "I'm analyzing your input and will provide guidance shortly...",
-        sender: 'bot',
-        timestamp: new Date()
+      if (!response.ok) {
+        throw new Error('Failed to send message')
       }
-      setMessages(prev => [...prev, botResponse])
-    }, 1000)
+      
+
+      // Get AI response
+      const aiResponse = await fetch('/api/counselor/message/ai-response', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          topicId: selectedTopic.id,
+        }),
+      })
+
+      if (aiResponse.ok) {
+        const botMessage = await aiResponse.json()
+        setMessages(prev => [...prev, botMessage])
+      }
+
+    } catch (error) {
+      console.error('Error sending message:', error)
+      // Optionally show error to user
+    }
   }
 
   return (
@@ -103,18 +160,18 @@ export function Chat() {
         {messages.map((message) => (
           <div
             key={message.id}
-            className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+            className={`flex ${message.role === 'u' ? 'justify-end' : 'justify-start'}`}
           >
             <div
               className={`max-w-[80%] rounded-lg p-3 ${
-                message.sender === 'user'
+                message.role === 'u'
                   ? 'bg-indigo-500 text-white'
                   : 'bg-gray-100 text-gray-900'
               }`}
             >
               <p className="text-sm">{message.content}</p>
               <span className="text-xs opacity-70 mt-1 block">
-                {message.timestamp.toLocaleTimeString([], { 
+                {new Date(message.createdAt).toLocaleTimeString([], { 
                   hour: '2-digit', 
                   minute: '2-digit' 
                 })}
@@ -147,7 +204,7 @@ export function Chat() {
             }}
           />
           <div className="flex flex-col gap-2">
-            {typeof window !== 'undefined' && 'webkitSpeechRecognition' in window && (
+            {isSpeechSupported && (
               <button
                 onClick={toggleListening}
                 className={`p-2 rounded-lg transition-colors ${
