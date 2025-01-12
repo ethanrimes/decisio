@@ -126,7 +126,7 @@ export function Chat() {
       
 
       // Get AI response
-      const aiResponse = await fetch('/api/counselor/message/ai-response', {
+      const aiResponse = await fetch('/api/openai/message-response', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -151,8 +151,8 @@ export function Chat() {
     <div className="flex flex-col h-[calc(100vh-4rem)]">
       {/* Chat Header */}
       <div className="border-b p-4 shrink-0">
-        <h2 className="text-lg font-semibold">AI Counselor</h2>
-        <p className="text-sm text-gray-500">Here to help with your career decisions</p>
+        <h2 className="text-lg font-semibold">AI Coach</h2>
+        <p className="text-sm text-gray-500">Here to help!</p>
       </div>
 
       {/* Messages Area */}

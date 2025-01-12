@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getCurrentUser } from '@/lib/auth'
+import { getCreateTopicResponse } from '@/lib/openai/queries/createTopic'
 
 export async function POST(request: Request) {
     try {
@@ -36,15 +37,15 @@ export async function POST(request: Request) {
         });
       }
   
-      // 4. Validate required fields
-      if (!body.fullName || !body.icon) {
-        console.error('Missing required fields:', { body });
-        return new NextResponse(JSON.stringify({ 
-          error: 'Missing required fields',
-          required: ['fullName', 'icon'],
-          received: body 
-        }), {
-          status: 400,
+      // 4. Get OpenAI response
+      console.log('About to call getCreateTopicResponse with:', body.fullName);
+      const { summary, iconName, categories } = await getCreateTopicResponse(body.fullName);
+      console.log('OpenAI Response:', { summary, iconName, categories });
+
+      if (!summary || !iconName) {
+        console.log('Failed validation - missing data:', { summary, iconName });
+        return new NextResponse(JSON.stringify({ error: 'Failed to generate summary or icon' }), {
+          status: 500,
           headers: { 'Content-Type': 'application/json' }
         });
       }
@@ -65,8 +66,8 @@ export async function POST(request: Request) {
       // 6. Prepare data
       const data = {
         fullName: body.fullName,
-        shortName: body.shortName,
-        icon: body.icon,
+        shortName: summary,
+        icon: iconName,
         userId: dbUser.id,
       };
       console.log('Prepared data for creation:', data);
@@ -87,20 +88,22 @@ export async function POST(request: Request) {
         });
       }
   
-      // 8. Create tile with try-catch
-      try {
-        const tile = await prisma.tile.create({
-          data: {
-            content: ['bullet 1', 'bullet 2'],
-            sectionName: 'Test name',
-            userId: dbUser.id,
-            topicId: topic.id,
-          }
-        });
-        console.log('Tile created successfully:', tile);
-      } catch (tileError) {
-        console.error('Error creating tile:', tileError);
-        // Continue even if tile creation fails
+      // 8. Create tiles for each category
+      for (const category of categories) {
+        try {
+          await prisma.tile.create({
+            data: {
+              content: [],
+              sectionName: category,
+              userId: dbUser.id,
+              topicId: topic.id,
+            }
+          });
+          console.log('Tile created successfully for category:', category);
+        } catch (tileError) {
+          console.error('Error creating tile for category:', category, tileError);
+          // Continue even if tile creation fails
+        }
       }
   
       // 9. Create welcome message

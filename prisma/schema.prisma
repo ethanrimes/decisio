@@ -82,6 +82,7 @@ model Tile {
   id           String    @id @default(uuid())
   content      String[]
   sectionName  String
+  understanding Int      @default(0)
   createdAt    DateTime  @default(now())
   modifiedAt   DateTime  @updatedAt
   userId       String

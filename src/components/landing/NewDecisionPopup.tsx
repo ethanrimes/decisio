@@ -15,22 +15,6 @@ export function NewDecisionPopup({ isOpen, onClose, onSubmit }: NewDecisionPopup
     if (decision.trim()) {
       setIsLoading(true)
       try {
-        // Get OpenAI response
-        const aiResponse = await fetch('/api/openai/create-topic', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ text: decision }),
-        })
-
-        const data = await aiResponse.json()
-        console.log('OpenAI response:', data)
-        if (!aiResponse.ok) throw new Error(data.error)
-
-        // Validate Lucide icon
-        console.log('Using icon:', data.iconName)
-
         // Create topic in database
         const topicResponse = await fetch('/api/counselor/topic/post', {
           method: 'POST',
@@ -39,8 +23,6 @@ export function NewDecisionPopup({ isOpen, onClose, onSubmit }: NewDecisionPopup
           },
           body: JSON.stringify({
             fullName: decision,
-            shortName: data.summary,
-            icon: data.iconName,
           }),
         })
 
@@ -52,7 +34,7 @@ export function NewDecisionPopup({ isOpen, onClose, onSubmit }: NewDecisionPopup
           throw new Error(topicData.error || 'Failed to create topic')
         }
 
-        onSubmit(decision, data.summary, data.iconName)
+        onSubmit(decision, topicData.shortName, topicData.icon)
         setDecision('')
         onClose()
       } catch (error) {

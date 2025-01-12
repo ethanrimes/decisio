@@ -54,6 +54,7 @@ export interface Tile {
   id: string
   content: string[]
   sectionName: string
+  understanding: number
   topicId: string
   createdAt: Date
   updatedAt: Date
