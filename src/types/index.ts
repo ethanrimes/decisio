@@ -187,3 +187,9 @@ export interface AddTilePopupProps {
   onClose: () => void;
   onSubmit: (data: { sectionName: string; content: string[] }) => void;
 }
+
+export interface NewTile {
+  sectionName: string;
+  topicId: string;
+  contents: string[];
+}

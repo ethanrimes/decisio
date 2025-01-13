@@ -15,7 +15,7 @@ import { Message } from '@/types'
 import { useTopicContext } from '@/app/counselor/context/TopixContext'
 
 export function Chat() {
-  const { selectedTopic } = useTopicContext()
+  const { selectedTopic, fetchTiles } = useTopicContext()
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isListening, setIsListening] = useState(false)
@@ -93,7 +93,7 @@ export function Chat() {
   }
 
   const handleSend = async () => {
-    if (!input.trim() || !selectedTopic) return
+    if (!input.trim() || !selectedTopic) return;
 
     const newMessage: Message = {
       id: Date.now().toString(),
@@ -101,13 +101,16 @@ export function Chat() {
       role: 'u',
       topicId: selectedTopic.id,
       createdAt: new Date(),
-      metadata: null
-    }
+      metadata: null,
+      topic: selectedTopic
+    };
 
     try {
+      // Update local messages state
+      setMessages(prev => [...prev, newMessage]);
+      setInput('');
+
       // Post the message to the database
-      setMessages(prev => [...prev, newMessage])
-      setInput('')
       const response = await fetch('/api/counselor/message/post', {
         method: 'POST',
         headers: {
@@ -118,34 +121,50 @@ export function Chat() {
           role: 'u',
           topicId: selectedTopic.id,
         }),
-      })
+      });
+      console.log("message post response: ", response);
 
       if (!response.ok) {
-        throw new Error('Failed to send message')
+        throw new Error('Failed to send message');
       }
-      
 
-      // Get AI response
-      const aiResponse = await fetch('/api/openai/message-response', {
+      // Refresh the loaded tiles
+      await fetchTiles();
+
+      // Get bot response
+      const botResponse = await fetch('/api/counselor/message/bot-response', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          topicId: selectedTopic.id,
+          topic: selectedTopic,
+          tiles: selectedTopic.tiles // Ensure tiles are included in the topic or fetched separately
         }),
-      })
+      });
 
-      if (aiResponse.ok) {
-        const botMessage = await aiResponse.json()
-        setMessages(prev => [...prev, botMessage])
+      if (!botResponse.ok) {
+        throw new Error('Failed to get bot response');
       }
 
+      const botMessageData = await botResponse.json();
+      
+      // Add bot response to messages with the correct type
+      setMessages(prev => [...prev, {
+        id: botMessageData.id,
+        content: botMessageData.content,
+        role: botMessageData.role,
+        topicId: botMessageData.topicId,
+        createdAt: new Date(botMessageData.createdAt),
+        metadata: botMessageData.metadata,
+        topic: selectedTopic
+      } as Message]);
+
     } catch (error) {
-      console.error('Error sending message:', error)
+      console.error('Error in message handling:', error);
       // Optionally show error to user
     }
-  }
+  };
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)]">
