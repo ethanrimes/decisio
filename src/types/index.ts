@@ -50,14 +50,22 @@ export interface Option {
   topic: Topic
 }
 
+export interface TileContent {
+  id: string;
+  content: string;
+  createdAt: Date;
+  modifiedAt: Date;
+  tileId: string;
+}
+
 export interface Tile {
-  id: string
-  content: string[]
-  sectionName: string
-  understanding: number
-  topicId: string
-  createdAt: Date
-  updatedAt: Date
+  id: string;
+  contents: TileContent[];
+  sectionName: string;
+  understanding: number;
+  topicId: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface Message {
@@ -81,9 +89,9 @@ export interface NavItemIcon extends NavItem {
 }
 
 export interface TileProps {
-  id: string
-  content: string[]
-  onDelete?: () => void
+  id: string;
+  contents: TileContent[];
+  onDelete?: () => void;
 }
 
 export interface TileSectionProps {

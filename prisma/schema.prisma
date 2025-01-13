@@ -79,19 +79,30 @@ model Option {
 }
 
 model Tile {
-  id           String    @id @default(uuid())
-  content      String[]
+  id           String        @id @default(uuid())
   sectionName  String
-  understanding Int      @default(0)
-  createdAt    DateTime  @default(now())
-  modifiedAt   DateTime  @updatedAt
+  understanding Int          @default(0)
+  createdAt    DateTime      @default(now())
+  modifiedAt   DateTime      @updatedAt
   userId       String
-  user         User      @relation(fields: [userId], references: [id])
+  user         User         @relation(fields: [userId], references: [id])
   topicId      String
-  topic        Topic     @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  topic        Topic        @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  contents     TileContent[]
 
   @@index([userId])
   @@index([topicId])
+}
+
+model TileContent {
+  id         String   @id @default(uuid())
+  content    String
+  createdAt  DateTime @default(now())
+  modifiedAt DateTime @updatedAt
+  tileId     String
+  tile       Tile     @relation(fields: [tileId], references: [id], onDelete: Cascade)
+
+  @@index([tileId])
 }
 
 model Topic {

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getCurrentUser } from '@/lib/auth'
 import { getCreateTopicResponse } from '@/lib/openai/queries/createTopic'
+import { createNewTile } from '@/app/api/counselor/tile/post/route'
 
 export async function POST(request: Request) {
     try {
@@ -91,14 +92,7 @@ export async function POST(request: Request) {
       // 8. Create tiles for each category
       for (const category of categories) {
         try {
-          await prisma.tile.create({
-            data: {
-              content: [],
-              sectionName: category,
-              userId: dbUser.id,
-              topicId: topic.id,
-            }
-          });
+          await createNewTile(category, dbUser.id, topic.id, []);
           console.log('Tile created successfully for category:', category);
         } catch (tileError) {
           console.error('Error creating tile for category:', category, tileError);
@@ -113,7 +107,7 @@ export async function POST(request: Request) {
           role: 'a',
           topicId: topic.id,
         }
-      })
+      });
   
       // 10. Return success response
       return new NextResponse(JSON.stringify(topic), {

@@ -42,44 +42,52 @@ export function TopicProvider({ children }: { children: React.ReactNode }) {
 
   const fetchTiles = async (topicId: string) => {
     try {
-      const response = await fetch(`/api/counselor/tile/get?topicId=${topicId}`)
+      console.log('TopicContext: Fetching tiles for topicId:', topicId);
+      const response = await fetch(`/api/counselor/tile/get?topicId=${topicId}`);
+      console.log('TopicContext: Tile fetch response status:', response.status);
+      
       if (!response.ok) {
-        throw new Error('Failed to fetch tiles')
+        throw new Error('Failed to fetch tiles');
       }
-      const data = await response.json()
-      setTiles(data)
+      
+      const data = await response.json();
+      console.log('TopicContext: Received tiles data:', data);
+      setTiles(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load tiles')
-      console.error('Error fetching tiles:', err)
+      console.error('TopicContext: Error fetching tiles:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load tiles');
     }
   }
 
   // Combined fetch operation
   useEffect(() => {
     const fetchData = async () => {
-      setIsLoading(true)
+      console.log('TopicContext: Initial data fetch started');
+      setIsLoading(true);
       try {
-        const firstTopic = await fetchTopics()
+        const firstTopic = await fetchTopics();
+        console.log('TopicContext: First topic fetched:', firstTopic);
         if (firstTopic) {
-          await fetchTiles(firstTopic.id)
+          await fetchTiles(firstTopic.id);
         }
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
     }
 
-    fetchData()
-  }, []) // Only runs on mount
+    fetchData();
+  }, []);
 
-  // Update tiles when selected topic changes (but not on initial mount)
+  // Update tiles when selected topic changes
   useEffect(() => {
+    console.log('TopicContext: Selected topic changed:', selectedTopic);
     if (selectedTopic) {
-      setIsLoading(true)
-      fetchTiles(selectedTopic.id).finally(() => setIsLoading(false))
+      setIsLoading(true);
+      fetchTiles(selectedTopic.id).finally(() => setIsLoading(false));
     } else {
-      setTiles([])
+      setTiles([]);
     }
-  }, [selectedTopic?.id]) // Only depends on selectedTopic.id
+  }, [selectedTopic?.id]);
 
   return (
     <TopicContext.Provider value={{ 

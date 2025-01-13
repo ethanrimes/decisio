@@ -13,7 +13,7 @@ export function TileSection({ tile }: TileSectionProps) {
 
       <TileComponent
         id={tile.id}
-        content={tile.content}
+        contents={tile.contents}
         onDelete={() => console.log('Delete tile:', tile.id)}
       />
     </div>
