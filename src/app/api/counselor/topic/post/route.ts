@@ -49,8 +49,9 @@ export async function POST(request: Request) {
 
       // Create tiles for each category and store them
       const createdTiles = [];
-      for (const category of categories) {
-        try {
+      if (categories && categories.length > 0) {
+        for (const category of categories) {
+          try {
           const tile = await createNewTile(category, dbUser.id, topic.id, []);
           createdTiles.push(tile);
         } catch (tileError) {

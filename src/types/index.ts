@@ -214,3 +214,9 @@ export interface TextInputBoxProps {
   selectedOptions?: Array<{ id: number; label: string }>
   onOptionRemove?: (id: number) => void
 }
+
+export interface GenerateTileQuestionsResponse {
+  understanding: number;
+  question: string;
+  sampleAnswers: string[];
+}

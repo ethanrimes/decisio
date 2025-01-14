@@ -1,25 +1,78 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Tile as TileComponent } from './Tile'
-import { TileSectionProps } from '@/types'
+import { TileSectionProps, Topic, Tile } from '@/types'
 import { UnderstandingMeter } from '@/components/ui/UnderstandingMeter'
 import { SelectableTextButton } from '@/components/ui/selectableTextButton'
 import { TextInputBox } from '@/components/ui/textInputBox'
+import { useTopicContext } from '@/app/counselor/context/TopixContext'
 
-// Sample options - these would typically come from props or an API
-const sampleOptions = [
-  { id: 1, label: "Medicine & Healthcare" },
-  { id: 2, label: "Law & Legal Services" },
-  { id: 3, label: "Software Engineering" },
-  { id: 4, label: "Business Consulting" },
-  { id: 5, label: "Academic Research" },
-  { id: 6, label: "Public Policy" }
-];
+function useQuestionGeneration(tile: Tile, selectedTopic: Topic | null) {
+  const [question, setQuestion] = useState("")
+  const [sampleAnswers, setSampleAnswers] = useState<string[]>([])
+  const [understanding, setUnderstanding] = useState(tile.understanding || 0)
+
+  useEffect(() => {
+    console.log('useQuestionGeneration effect triggered', {
+      tileId: tile.id,
+      contentsLength: tile.contents.length,
+      contentsSummary: tile.contents.map(c => c.content.substring(0, 20)),
+      selectedTopicId: selectedTopic?.id
+    });
+
+    const generateQuestions = async () => {
+      if (!selectedTopic || !tile) return;
+
+      try {
+        const response = await fetch(
+          `/api/counselor/tile/generateQuestions?topicId=${selectedTopic.id}&tileId=${tile.id}`
+        );
+
+        if (!response.ok) throw new Error('Failed to generate questions');
+
+        const data = await response.json();
+        console.log('Generated new questions data:', data);
+        setQuestion(data.question);
+        setSampleAnswers(data.sampleAnswers);
+        setUnderstanding(data.understanding);
+
+      } catch (error) {
+        console.error('Error generating questions:', error);
+      }
+    };
+
+    generateQuestions();
+  }, [selectedTopic, tile.contents, tile.id]);
+
+  return { question, sampleAnswers, understanding };
+}
 
 export function TileSection({ tile }: TileSectionProps) {
+  console.log('TileSection render', {
+    tileId: tile.id,
+    contentsLength: tile.contents.length,
+    lastContent: tile.contents[tile.contents.length - 1]?.content,
+    understanding: tile.understanding
+  });
+
   const [selectedOptions, setSelectedOptions] = useState<Array<{ id: number; label: string }>>([])
-  const [inputText, setInputText] = useState('')
+  const [, setInputText] = useState('')
+  const { selectedTopic, fetchTiles } = useTopicContext()
+  const [localTile, setLocalTile] = useState(tile);
+  
+  useEffect(() => {
+    console.log('Tile prop updated:', {
+      tileId: tile.id,
+      oldContentsLength: localTile.contents.length,
+      newContentsLength: tile.contents.length,
+      oldUnderstanding: localTile.understanding,
+      newUnderstanding: tile.understanding
+    });
+    setLocalTile(tile);
+  }, [tile]);
+
+  const { question, sampleAnswers, understanding } = useQuestionGeneration(localTile, selectedTopic);
 
   const handleOptionClick = (optionId: number, label: string) => {
     const option = { id: optionId, label }
@@ -36,10 +89,49 @@ export function TileSection({ tile }: TileSectionProps) {
     setSelectedOptions(prev => prev.filter(opt => opt.id !== optionId))
   }
 
-  const handleSubmit = (text: string) => {
-    console.log('Submitted:', text)
-    setInputText('')
-    setSelectedOptions([])
+  const handleSubmit = async (text: string) => {
+    if (!text.trim() || !selectedTopic) return;
+
+    console.log('Submitting response:', {
+      text,
+      topicId: selectedTopic.id,
+      tileId: tile.id
+    });
+
+    try {
+      const response = await fetch('/api/counselor/message/post', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: `The question I was asked is: "${question}". My response is the following: ${text}`,
+          role: 'u',
+          topicId: selectedTopic.id,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send message');
+      }
+
+      console.log('Message posted successfully, fetching new tiles...');
+      
+      // Clear the input and selected options
+      setInputText('')
+      setSelectedOptions([])
+
+      console.log('Before fetchTiles call');
+      await fetchTiles();
+      console.log('After fetchTiles call, new tile contents:', {
+        tileId: tile.id,
+        contentsLength: tile.contents.length,
+        lastContent: tile.contents[tile.contents.length - 1]?.content
+      });
+
+    } catch (error) {
+      console.error('Error submitting message:', error)
+    }
   }
 
   return (
@@ -48,32 +140,32 @@ export function TileSection({ tile }: TileSectionProps) {
         <h2 className="text-lg font-semibold text-gray-900">{tile.sectionName}</h2>
         <div className="flex items-center space-x-2">
           <div className="w-32">
-            <UnderstandingMeter level={tile.understanding || 0} />
+            <UnderstandingMeter level={understanding} />
           </div>
         </div>
       </div>
 
       <TileComponent
-        id={tile.id}
-        contents={tile.contents}
-        onDelete={() => console.log('Delete tile:', tile.id)}
+        id={localTile.id}
+        contents={localTile.contents}
+        onDelete={() => console.log('Delete tile:', localTile.id)}
       />
 
       {/* Question Section */}
       <div className="mt-4">
         <p className="text-gray-800 font-medium">
-          What specific aspects of {tile.sectionName} interest you the most?
+          {question}
         </p>
       </div>
 
       {/* Options Grid */}
       <div className="grid grid-cols-2 gap-3 mt-4">
-        {sampleOptions.map((option) => (
+        {sampleAnswers.map((answer, index) => (
           <SelectableTextButton
-            key={option.id}
-            label={option.label}
-            isSelected={selectedOptions.some(opt => opt.id === option.id)}
-            onClick={() => handleOptionClick(option.id, option.label)}
+            key={index} // Using index as key since sampleAnswers may not have unique ids
+            label={answer} // Assuming sampleAnswers contains the labels directly
+            isSelected={selectedOptions.some(opt => opt.label === answer)}
+            onClick={() => handleOptionClick(index, answer)} // Using index for option id
           />
         ))}
       </div>
@@ -90,5 +182,5 @@ export function TileSection({ tile }: TileSectionProps) {
         />
       </div>
     </div>
-  );
+  )
 } 
