@@ -193,3 +193,24 @@ export interface NewTile {
   topicId: string;
   contents: string[];
 }
+
+export interface UnderstandingMeterProps {
+  level: number;
+  className?: string;
+}
+
+export interface SelectableTextButtonProps {
+  label: string;
+  isSelected: boolean;
+  onClick: () => void;
+}
+
+export interface TextInputBoxProps {
+  onSubmit: (text: string) => void
+  placeholder?: string
+  className?: string
+  value?: string
+  onChange?: (value: string) => void
+  selectedOptions?: Array<{ id: number; label: string }>
+  onOptionRemove?: (id: number) => void
+}

@@ -1,34 +1,15 @@
 'use client'
 
-// Add these type declarations
-declare global {
-  interface Window {
-    webkitSpeechRecognition: any;
-  }
-}
-
-type SpeechRecognition = any;
-
 import { useState, useEffect } from 'react'
-import { Send, Mic, MicOff } from 'lucide-react'
 import { Message } from '@/types'
 import { useTopicContext } from '@/app/counselor/context/TopixContext'
+import { TextInputBox } from '@/components/ui/textInputBox'
 
 export function Chat() {
   const { selectedTopic, fetchTiles } = useTopicContext()
   const [messages, setMessages] = useState<Message[]>([])
-  const [input, setInput] = useState('')
-  const [isListening, setIsListening] = useState(false)
-  const [recognition, setRecognition] = useState<SpeechRecognition | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [isSpeechSupported, setIsSpeechSupported] = useState(false)
-
-  useEffect(() => {
-    // Check for speech recognition support
-    setIsSpeechSupported(
-      typeof window !== 'undefined' && 'webkitSpeechRecognition' in window
-    )
-  }, [])
+  const [input, setInput] = useState('')
 
   useEffect(() => {
     const fetchMessages = async () => {
@@ -53,46 +34,7 @@ export function Chat() {
     fetchMessages()
   }, [selectedTopic])
 
-  // Initialize speech recognition
-  useEffect(() => {
-    if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
-      const SpeechRecognition = window.webkitSpeechRecognition
-      const recognition = new SpeechRecognition()
-      
-      recognition.continuous = true
-      recognition.interimResults = true
-      
-      recognition.onresult = (event) => {
-        const transcript = Array.from(event.results)
-          .map(result => result[0])
-          .map(result => result.transcript)
-          .join('')
-        
-        setInput(transcript)
-      }
-
-      recognition.onerror = (event) => {
-        console.error('Speech recognition error:', event.error)
-        setIsListening(false)
-      }
-
-      setRecognition(recognition)
-    }
-  }, [])
-
-  const toggleListening = () => {
-    if (!recognition) return
-
-    if (isListening) {
-      recognition.stop()
-      setIsListening(false)
-    } else {
-      recognition.start()
-      setIsListening(true)
-    }
-  }
-
-  const handleSend = async () => {
+  const handleSend = async (input: string) => {
     if (!input.trim() || !selectedTopic) return;
 
     const newMessage: Message = {
@@ -101,14 +43,13 @@ export function Chat() {
       role: 'u',
       topicId: selectedTopic.id,
       createdAt: new Date(),
-      metadata: null,
+      metadata: '',
       topic: selectedTopic
     };
 
     try {
       // Update local messages state
       setMessages(prev => [...prev, newMessage]);
-      setInput('');
 
       // Post the message to the database
       const response = await fetch('/api/counselor/message/post', {
@@ -139,7 +80,7 @@ export function Chat() {
         },
         body: JSON.stringify({
           topic: selectedTopic,
-          tiles: selectedTopic.tiles // Ensure tiles are included in the topic or fetched separately
+          tiles: selectedTopic.tiles
         }),
       });
 
@@ -149,7 +90,7 @@ export function Chat() {
 
       const botMessageData = await botResponse.json();
       
-      // Add bot response to messages with the correct type
+      // Add bot response to messages
       setMessages(prev => [...prev, {
         id: botMessageData.id,
         content: botMessageData.content,
@@ -201,54 +142,14 @@ export function Chat() {
       </div>
 
       {/* Input Area */}
-      <div className="border-t p-4 shrink-0">
-        <div className="flex gap-2 items-start">
-          <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault()
-                handleSend()
-              }
-            }}
-            placeholder="Type your message..."
-            rows={1}
-            className="flex-1 rounded-lg border border-gray-200 p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none min-h-[80px] max-h-[160px] overflow-y-auto"
-            style={{ height: '80px' }}
-            onInput={(e) => {
-              const target = e.target as HTMLTextAreaElement
-              target.style.height = '80px'
-              target.style.height = `${target.scrollHeight}px`
-            }}
-          />
-          <div className="flex flex-col gap-2">
-            {isSpeechSupported && (
-              <button
-                onClick={toggleListening}
-                className={`p-2 rounded-lg transition-colors ${
-                  isListening 
-                    ? 'bg-red-500 hover:bg-red-600' 
-                    : 'bg-gray-200 hover:bg-gray-300'
-                }`}
-                title={isListening ? 'Stop listening' : 'Start voice input'}
-              >
-                {isListening ? (
-                  <MicOff className="h-5 w-5 text-white" />
-                ) : (
-                  <Mic className="h-5 w-5 text-gray-700" />
-                )}
-              </button>
-            )}
-            <button
-              onClick={handleSend}
-              className="p-2 rounded-lg bg-indigo-500 text-white hover:bg-indigo-600 transition-colors"
-            >
-              <Send className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
-      </div>
+      <TextInputBox 
+        onSubmit={handleSend}
+        placeholder="Type your message..."
+        value={input}
+        onChange={setInput}
+        selectedOptions={[]}
+        onOptionRemove={() => {}}
+      />
     </div>
   )
 } 
