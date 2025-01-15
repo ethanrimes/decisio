@@ -12,22 +12,22 @@ export async function POST(request: Request) {
       })
     }
 
-    const { content, tileId } = await request.json()
+    const { contents, tileId } = await request.json()
 
-    const tileContent = await prisma.tileContent.create({
-      data: {
+    const tileContents = await prisma.tileContent.createMany({
+      data: contents.map((content: string) => ({
         content,
         tileId,
-      },
+      })),
       skipDuplicates: true, // Skips rows that already exist
     })
 
-    return new NextResponse(JSON.stringify(tileContent), {
+    return new NextResponse(JSON.stringify(tileContents), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     })
   } catch (error) {
-    return new NextResponse(JSON.stringify({ error: error instanceof Error ? error.message : 'Failed to create tile content' }), { 
+    return new NextResponse(JSON.stringify({ error: error instanceof Error ? error.message : 'Failed to create tile contents' }), { 
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     })

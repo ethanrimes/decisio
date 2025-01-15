@@ -16,7 +16,8 @@ export async function createNewTile(sectionName: string, userId: string, topicId
       data: {
         content: contentItem,
         tileId: tile.id,
-      }
+      },
+      skipDuplicates: true, // Skips rows that already exist
     })
   })
 

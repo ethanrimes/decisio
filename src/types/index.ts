@@ -33,21 +33,10 @@ export interface Topic {
   updatedAt: Date
   userId: string
   user: User
-  options: Option[]
   tiles: Tile[]
   messages: Message[]
   solved: boolean
-}
-
-export interface Option {
-  id: string
-  name: string
-  description: string | null
-  status: string
-  createdAt: Date
-  updatedAt: Date
-  topicId: string
-  topic: Topic
+  decisionOptions: DecisionOption[]
 }
 
 export interface TileContent {
@@ -60,12 +49,15 @@ export interface TileContent {
 
 export interface Tile {
   id: string;
-  contents: TileContent[];
   sectionName: string;
+  question: string | null;
+  answerOptions: string[];
   understanding: number;
-  topicId: string;
   createdAt: Date;
-  updatedAt: Date;
+  modifiedAt: Date;
+  userId: string;
+  topicId: string;
+  contents: TileContent[];
 }
 
 export interface Message {
@@ -234,4 +226,22 @@ export interface LoadingContextType {
   updateProgress: (id: string, progress: number) => void;
   isLoading: boolean;
   currentOperations: LoadingOperation[];
+}
+
+export type DecisionOption = {
+  id: string;
+  name?: string;
+  description?: string;
+  fitReasons?: string[];
+  metrics?: string[];
+  implementationSteps?: string[];
+  timeline?: string[];
+  topicId: string;
+};
+
+export interface BulletStyleInputProps {
+  onSubmit: (bullets: string[]) => void;
+  initialBullets?: string[];
+  onBulletsChange: (bullets: string[]) => void;
+  placeholder?: string;
 }

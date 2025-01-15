@@ -52,12 +52,15 @@ Evaluate the current knowledge and provide your response in the exact format spe
   const understanding = understandingMatch ? parseInt(understandingMatch[1]) : 0;
   const question = questionMatch ? questionMatch[1].trim() : "";
   const sampleAnswers = sampleAnswersMatch 
-    ? sampleAnswersMatch[1].split(",").map(a => a.trim())
+    ? sampleAnswersMatch[1].split(",").map(a => {
+        const trimmedAnswer = a.trim();
+        return trimmedAnswer.charAt(0).toUpperCase() + trimmedAnswer.slice(1).replace(/\.$/, '');
+      })
     : [];
 
   return {
     understanding,
-    question: understanding === 3 ? "" : question,
-    sampleAnswers: understanding === 3 ? [] : sampleAnswers
+    question: understanding === 4 ? "" : question,
+    sampleAnswers: understanding === 4 ? [] : sampleAnswers
   };
 }

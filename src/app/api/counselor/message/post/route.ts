@@ -41,7 +41,8 @@ export async function POST(request: Request) {
           data: {
             content: content.content,
             tileId: tile.id,
-          }
+          },
+          skipDuplicates: true, // Skips rows that already exist
         })
       }
     }

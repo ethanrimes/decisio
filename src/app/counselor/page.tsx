@@ -70,37 +70,42 @@ export default function CounselorPage() {
   return (
     <div className="flex h-full">
       <div className="w-2/3 bg-white overflow-auto">
-        {/* Removed the extra flex justify-between containers that were constraining width */}
         <div className="w-full">
           <NotesHeader 
             activeView={activeView}
             onViewChange={setActiveView}
           />
-          <div className="px-6">
-            <button
-              onClick={() => setIsAddTileOpen(true)}
-              className="mt-2 py-2 px-4 bg-indigo-500 text-white rounded-md hover:bg-indigo-600"
-            >
-              Add Tile
-            </button>
-          </div>
         </div>
 
-        <div className="p-6">
+        <div className="p-6 flex flex-col h-[calc(100vh-4rem)]">
           {/* Details View */}
-          <div className={`${activeView === 'details' ? 'block' : 'hidden'}`}>
-            <div className="space-y-8 h-[calc(100vh-10rem)] overflow-y-auto">
+          <div className={`${activeView === 'details' ? 'flex flex-col flex-1' : 'hidden'}`}>
+            <div className="flex-1 overflow-y-auto mb-4">
               {isLoading ? (
                 <div>Loading tiles...</div>
               ) : error ? (
                 <div>Error: {error}</div>
               ) : (
-                tiles.map((tile) => (
-                  <TileSection
-                    key={tile.id}
-                    tile={tile}
-                  />
-                ))
+                <div className="space-y-8">
+                  {tiles.map((tile) => (
+                    <TileSection
+                      key={tile.id}
+                      tile={tile}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            {/* Button fixed at bottom */}
+            <div className="flex-shrink-0">
+              {!isLoading && (
+                <button
+                  onClick={() => setIsAddTileOpen(true)}
+                  className="w-full py-2 px-4 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 transition-colors"
+                >
+                  Add Tile
+                </button>
               )}
             </div>
           </div>
@@ -123,7 +128,7 @@ export default function CounselorPage() {
         </div>
       </div>
 
-      {/* Right sidebar with chat (1/3) */}
+      {/* Right sidebar with chat */}
       <div className="w-1/3 bg-gray-50 border-l">
         <Chat />
       </div>
@@ -134,5 +139,5 @@ export default function CounselorPage() {
         onSubmit={handleAddTile}
       />
     </div>
-    )
+  )
 }

@@ -8,8 +8,13 @@ import { generateBotResponse } from '@/lib/openai/queries/generateBotResponse'
 
 export async function POST(request: Request) {
     try {
+      console.log('Topic POST: Starting request');
+      
       const user = await getCurrentUser();
+      console.log('Topic POST: User authentication status:', !!user);
+
       if (!user || !user.id) {
+        console.log('Topic POST: Unauthorized - no user');
         return new NextResponse(JSON.stringify({ error: 'Unauthorized' }), {
           status: 401,
           headers: { 'Content-Type': 'application/json' }
@@ -17,27 +22,40 @@ export async function POST(request: Request) {
       }
 
       const body = await request.json();
+      console.log('Topic POST: Request body:', {
+        fullName: body.fullName
+      });
+
+      console.log('Topic POST: Calling getCreateTopicResponse');
       const { summary, iconName, categories } = await getCreateTopicResponse(body.fullName);
+      console.log('Topic POST: OpenAI response:', {
+        summary,
+        iconName,
+        categoriesCount: categories?.length
+      });
 
       if (!summary || !iconName) {
+        console.log('Topic POST: Missing summary or icon');
         return new NextResponse(JSON.stringify({ error: 'Failed to generate summary or icon' }), {
           status: 500,
           headers: { 'Content-Type': 'application/json' }
         });
       }
 
+      console.log('Topic POST: Finding user in database');
       const dbUser = await prisma.user.findUnique({
         where: { id: user.id }
       });
 
       if (!dbUser) {
+        console.log('Topic POST: User not found in database');
         return new NextResponse(JSON.stringify({ error: 'User not found' }), {
           status: 404,
           headers: { 'Content-Type': 'application/json' }
         });
       }
 
-      // Create topic
+      console.log('Topic POST: Creating topic');
       const topic = await prisma.topic.create({
         data: {
           fullName: body.fullName,
@@ -46,37 +64,48 @@ export async function POST(request: Request) {
           userId: dbUser.id,
         }
       });
+      console.log('Topic POST: Topic created:', topic.id);
 
       // Create tiles for each category and store them
       const createdTiles = [];
       if (categories && categories.length > 0) {
+        console.log('Topic POST: Creating tiles for categories');
         for (const category of categories) {
           try {
+            console.log('Topic POST: Creating tile for category:', category);
             const tile = await createNewTile(category, dbUser.id, topic.id, []);
             createdTiles.push(tile);
           } catch (tileError) {
-            console.error('Error creating tile for category:', category, tileError);
+            console.error('Topic POST: Error creating tile:', {
+              category,
+              error: tileError
+            });
           }
         }
       }
 
-      // Parse the topic name to generate initial bullets for each category
+      console.log('Topic POST: Parsing user input');
       const { patchedTiles, newTiles } = await parseUserInput(body.fullName, topic, createdTiles);
+      console.log('Topic POST: Parse results:', {
+        patchedTilesCount: patchedTiles.length,
+        newTilesCount: newTiles.length
+      });
 
       // Update existing tiles with the generated bullets
+      console.log('Topic POST: Updating tiles with content');
       for (const { tile, newContent } of patchedTiles) {
         for (const content of newContent) {
           await prisma.tileContent.create({
             data: {
               content: content.content,
               tileId: tile.id,
-            }
+            },
           });
         }
       }
 
-      // Create welcome message
-      await prisma.message.create({
+      console.log('Topic POST: Creating welcome message');
+      const welcomeMessage = await prisma.message.create({
         data: {
           content: "Hello! I'm your AI decision coach. I'll help you analyze your options and make better decisions. Feel free to share your thoughts or ask questions about your decision-making process.",
           role: 'a',
@@ -84,16 +113,18 @@ export async function POST(request: Request) {
         }
       });
 
-      // Generate and create first bot question based on the populated tiles
+      console.log('Topic POST: Fetching updated tiles');
       const updatedTiles = await prisma.tile.findMany({
         where: { topicId: topic.id },
         include: { contents: true }
       });
 
+      console.log('Topic POST: Generating bot response');
       const botQuestion = await generateBotResponse(updatedTiles, topic);
-      
-      // Post the bot question to the database
-      await prisma.message.create({
+      console.log('Topic POST: Bot response generated:', !!botQuestion);
+
+      console.log('Topic POST: Creating bot message');
+      const botMessage = await prisma.message.create({
         data: {
           content: botQuestion,
           role: 'a',
@@ -101,16 +132,25 @@ export async function POST(request: Request) {
         }
       });
 
+      console.log('Topic POST: Request completed successfully');
       return new NextResponse(JSON.stringify(topic), {
         status: 200,
         headers: { 'Content-Type': 'application/json' }
       });
 
     } catch (error) {
-      console.error('Unhandled error:', error);
+      console.error('Topic POST: Error details:', {
+        name: error?.name,
+        message: error?.message,
+        stack: error?.stack,
+        type: typeof error
+      });
+
+      // Ensure we're returning a valid object
       return new NextResponse(JSON.stringify({ 
         error: 'Internal server error',
-        details: error.message 
+        details: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString()
       }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' }

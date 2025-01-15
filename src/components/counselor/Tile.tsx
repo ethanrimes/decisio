@@ -105,6 +105,7 @@ export function Tile({ id, contents: initialContents, onDelete }: TileProps) {
   if (isEditing) {
     return (
       <div className="relative p-4 rounded-lg border border-gray-200 bg-white">
+        <h3 className="text-sm font-medium text-gray-700 mb-2">Collected information</h3>
         <div className="flex flex-col gap-2">
           {editedContents.map((item) => (
             <div key={item.id || uuidv4()} className="flex gap-2">
@@ -175,6 +176,7 @@ export function Tile({ id, contents: initialContents, onDelete }: TileProps) {
     >
       <div className="flex justify-between items-start">
         <div className="flex-1">
+          <h3 className="text-sm font-medium text-gray-700 mb-2">Collected information</h3>
           <ul className="list-disc pl-4 space-y-1">
             {currentContents.map((item) => (
               <li key={item.id || uuidv4()} className="text-sm text-gray-600">

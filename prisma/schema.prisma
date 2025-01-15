@@ -50,7 +50,7 @@ model User {
   accounts      Account[]
   sessions      Session[]
   topics        Topic[]
-  options       Option[]
+  decisionOptions DecisionOption[]
   tiles         Tile[]
 }
 
@@ -62,33 +62,19 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-model Option {
-  id          String    @id @default(uuid())
-  name        String
-  description String?
-  fitReasons  String?
-  createdAt   DateTime  @default(now())
-  status      String    // 'rejected', 'accepted', 'pending'
-  userId      String
-  user        User      @relation(fields: [userId], references: [id])
-  topicId     String
-  topic       Topic     @relation(fields: [topicId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([topicId])
-}
-
 model Tile {
-  id           String        @id @default(uuid())
-  sectionName  String
-  understanding Int          @default(0)
-  createdAt    DateTime      @default(now())
-  modifiedAt   DateTime      @updatedAt
-  userId       String
-  user         User         @relation(fields: [userId], references: [id])
-  topicId      String
-  topic        Topic        @relation(fields: [topicId], references: [id], onDelete: Cascade)
-  contents     TileContent[]
+  id             String        @id @default(uuid())
+  sectionName    String
+  question       String?
+  answerOptions  String[]     @default([])
+  understanding  Int          @default(0)
+  createdAt      DateTime     @default(now())
+  modifiedAt     DateTime     @updatedAt
+  userId         String
+  user           User         @relation(fields: [userId], references: [id])
+  topicId        String
+  topic          Topic        @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  contents       TileContent[]
 
   @@index([userId])
   @@index([topicId])
@@ -102,6 +88,7 @@ model TileContent {
   tileId     String
   tile       Tile     @relation(fields: [tileId], references: [id], onDelete: Cascade)
 
+  @@unique([content, tileId]) // Ensures `content` is unique per `tileId`
   @@index([tileId])
 }
 
@@ -116,9 +103,9 @@ model Topic {
   updatedAt     DateTime  @updatedAt
   lastMessageAt DateTime  @default(now())
   solved        Boolean   @default(false)
-  options       Option[]
   tiles         Tile[]
   messages      Message[]
+  decisionOptions DecisionOption[]
 
   @@index([userId])
   @@index([lastMessageAt])
@@ -135,4 +122,22 @@ model Message {
 
   @@index([topicId])
   @@index([createdAt])
+}
+
+model DecisionOption {
+  id                 String    @id @default(uuid())
+  name               String
+  description        String
+  fitReasons         String[]
+  metrics            String[]
+  implementationSteps String[]
+  timeline           String[]
+  topicId            String
+  topic              Topic     @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  status             String    // 'rejected', 'accepted', 'pending'
+  userId             String
+  user               User      @relation(fields: [userId], references: [id])
+
+  @@index([topicId])
+  @@index([userId])
 }
