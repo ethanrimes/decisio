@@ -41,23 +41,50 @@ export function TopicProvider({ children }: { children: React.ReactNode }) {
   }
 
   const fetchTiles = async (topicId: string) => {
+    if (!topicId) {
+      console.error('TopicContext: No topicId provided to fetchTiles');
+      return;
+    }
+
+    // Log current tiles and their contents
+    console.log('TopicContext: Current tiles before fetch:', tiles.map(tile => ({
+      tileId: tile.id,
+      contents: tile.contents.map(c => ({
+        id: c.id,
+        content: c.content
+      }))
+    })));
+
+    console.log('TopicContext: Fetching tiles for topicId:', topicId);
+    
     try {
-      console.log('TopicContext: Fetching tiles for topicId:', topicId);
       const response = await fetch(`/api/counselor/tile/get?topicId=${topicId}`);
       console.log('TopicContext: Tile fetch response status:', response.status);
       
       if (!response.ok) {
-        throw new Error('Failed to fetch tiles');
+        throw new Error(`Failed to fetch tiles: ${response.statusText}`);
       }
-      
+
       const data = await response.json();
-      console.log('TopicContext: Received tiles data:', data);
-      setTiles(data);
-    } catch (err) {
-      console.error('TopicContext: Error fetching tiles:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load tiles');
+      
+      // Log fetched tiles and their contents
+      console.log('TopicContext: Received tiles data:', data.map(tile => ({
+        tileId: tile.id,
+        contents: tile.contents.map(c => ({
+          id: c.id,
+          content: c.content
+        }))
+      })));
+
+      // line to fix
+      setTiles(() => data);  // Force state update
+      
+      return data;
+    } catch (error) {
+      console.error('TopicContext: Error fetching tiles:', error);
+      throw error;
     }
-  }
+  };
 
   // Combined fetch operation
   useEffect(() => {
@@ -88,6 +115,16 @@ export function TopicProvider({ children }: { children: React.ReactNode }) {
       setTiles([]);
     }
   }, [selectedTopic?.id]);
+
+  useEffect(() => {
+    console.log('TopicContext: Tiles state updated, here is new react hook log:', tiles.map(tile => ({
+      tileId: tile.id,
+      contents: tile.contents.map(c => ({
+        id: c.id,
+        content: c.content
+      }))
+    })));
+  }, [tiles]); // This will run whenever tiles state actually updates
 
   return (
     <TopicContext.Provider value={{ 

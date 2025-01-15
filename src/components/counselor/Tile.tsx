@@ -1,40 +1,51 @@
 'use client'
 
-import { useState } from 'react'
-import { MoreHorizontal, X, Check, Pencil } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { X, Check, Pencil } from 'lucide-react'
 import { TileProps, TileContent } from '@/types'
 import { useTopicContext } from '@/app/counselor/context/TopixContext'
 import { v4 as uuidv4 } from 'uuid'
 
 export function Tile({ id, contents: initialContents, onDelete }: TileProps) {
-  const { fetchTiles } = useTopicContext()
+  const { tiles, fetchTiles } = useTopicContext()
   const [isHovered, setIsHovered] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
-  const [localContents, setLocalContents] = useState<TileContent[]>(initialContents)
-  const [editedContents, setEditedContents] = useState<TileContent[]>(initialContents)
+  
+  // Get the most up-to-date contents from context
+  const currentTile = tiles.find(tile => tile.id === id)
+  const currentContents = currentTile?.contents || initialContents
+  
+  const [editedContents, setEditedContents] = useState<TileContent[]>(currentContents)
+
+  // Update editedContents when currentContents changes
+  useEffect(() => {
+    if (!isEditing) {
+      setEditedContents(currentContents);
+    }
+  }, [currentContents, isEditing]);
 
   const handleSave = async () => {
     try {
       console.log('Starting handleSave with:', {
         editedContents,
-        localContents
+        currentContents
       });
 
       // Find new contents to add
       const toAdd = editedContents.filter(item => 
-        !localContents.some(local => local.id === item.id) // Check if the item does not exist in localContents
+        !currentContents.some(local => local.id === item.id)
       );
       console.log('Contents to add:', toAdd);
 
       // Find contents to delete
-      const toDelete = localContents.filter(
+      const toDelete = currentContents.filter(
         local => !editedContents.some(edited => edited.id === local.id)
       );
       console.log('Contents to delete:', toDelete);
 
       // Find contents to update
       const toUpdate = editedContents.filter(edited => 
-        edited.id && localContents.some(local => 
+        edited.id && currentContents.some(local => 
           local.id === edited.id && local.content !== edited.content
         )
       );
@@ -50,17 +61,8 @@ export function Tile({ id, contents: initialContents, onDelete }: TileProps) {
         });
         
         if (!response.ok) {
-          const errorData = await response.json();
-          console.error('Failed to add item:', {
-            status: response.status,
-            statusText: response.statusText,
-            error: errorData
-          });
           throw new Error(`Failed to add item: ${response.statusText}`);
         }
-
-        const result = await response.json();
-        console.log('Successfully added item:', result);
       }
 
       // Handle updates
@@ -73,17 +75,8 @@ export function Tile({ id, contents: initialContents, onDelete }: TileProps) {
         });
 
         if (!response.ok) {
-          const errorData = await response.json();
-          console.error('Failed to update item:', {
-            status: response.status,
-            statusText: response.statusText,
-            error: errorData
-          });
           throw new Error(`Failed to update item: ${response.statusText}`);
         }
-
-        const result = await response.json();
-        console.log('Successfully updated item:', result);
       }
 
       // Handle deletions
@@ -96,27 +89,16 @@ export function Tile({ id, contents: initialContents, onDelete }: TileProps) {
         });
 
         if (!response.ok) {
-          const errorData = await response.json();
-          console.error('Failed to delete item:', {
-            status: response.status,
-            statusText: response.statusText,
-            error: errorData
-          });
           throw new Error(`Failed to delete item: ${response.statusText}`);
         }
-
-        const result = await response.json();
-        console.log('Successfully deleted item:', result);
       }
 
-      setLocalContents(editedContents);
       setIsEditing(false);
-      console.log('Fetching updated tiles...');
       await fetchTiles();
       console.log('Save operation completed successfully');
     } catch (error) {
       console.error('Error in handleSave:', error);
-      setEditedContents(localContents); // Revert on error
+      setEditedContents(currentContents); // Revert on error
     }
   }
 
@@ -167,7 +149,7 @@ export function Tile({ id, contents: initialContents, onDelete }: TileProps) {
             <button
               onClick={() => {
                 setIsEditing(false)
-                setEditedContents(localContents)
+                setEditedContents(currentContents)
               }}
               className="p-2 hover:bg-gray-100 rounded"
             >
@@ -194,7 +176,7 @@ export function Tile({ id, contents: initialContents, onDelete }: TileProps) {
       <div className="flex justify-between items-start">
         <div className="flex-1">
           <ul className="list-disc pl-4 space-y-1">
-            {localContents.map((item) => (
+            {currentContents.map((item) => (
               <li key={item.id || uuidv4()} className="text-sm text-gray-600">
                 {item.content}
               </li>
@@ -209,17 +191,6 @@ export function Tile({ id, contents: initialContents, onDelete }: TileProps) {
             >
               <Pencil className="h-4 w-4 text-gray-500" />
             </button>
-            <button className="p-1 hover:bg-gray-200 rounded">
-              <MoreHorizontal className="h-4 w-4 text-gray-500" />
-            </button>
-            {onDelete && (
-              <button
-                onClick={onDelete}
-                className="p-1 hover:bg-gray-200 rounded"
-              >
-                <X className="h-4 w-4 text-gray-500" />
-              </button>
-            )}
           </div>
         )}
       </div>

@@ -7,6 +7,7 @@ import { UnderstandingMeter } from '@/components/ui/UnderstandingMeter'
 import { SelectableTextButton } from '@/components/ui/selectableTextButton'
 import { TextInputBox } from '@/components/ui/textInputBox'
 import { useTopicContext } from '@/app/counselor/context/TopixContext'
+import { X } from 'lucide-react'
 
 function useQuestionGeneration(tile: Tile, selectedTopic: Topic | null) {
   const [question, setQuestion] = useState("")
@@ -49,17 +50,11 @@ function useQuestionGeneration(tile: Tile, selectedTopic: Topic | null) {
 }
 
 export function TileSection({ tile }: TileSectionProps) {
-  console.log('TileSection render', {
-    tileId: tile.id,
-    contentsLength: tile.contents.length,
-    lastContent: tile.contents[tile.contents.length - 1]?.content,
-    understanding: tile.understanding
-  });
-
   const [selectedOptions, setSelectedOptions] = useState<Array<{ id: number; label: string }>>([])
   const [, setInputText] = useState('')
   const { selectedTopic, fetchTiles } = useTopicContext()
   const [localTile, setLocalTile] = useState(tile);
+  const [isDeleting, setIsDeleting] = useState(false)
   
   useEffect(() => {
     console.log('Tile prop updated:', {
@@ -92,10 +87,13 @@ export function TileSection({ tile }: TileSectionProps) {
   const handleSubmit = async (text: string) => {
     if (!text.trim() || !selectedTopic) return;
 
-    console.log('Submitting response:', {
-      text,
-      topicId: selectedTopic.id,
-      tileId: tile.id
+    console.log('Before fetchTiles call:', {
+      tileId: tile.id,
+      contentsLength: tile.contents.length,
+      contents: tile.contents.map(c => ({
+        id: c.id,
+        content: c.content
+      }))
     });
 
     try {
@@ -105,7 +103,7 @@ export function TileSection({ tile }: TileSectionProps) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          content: `The question I was asked is: "${question}". My response is the following: ${text}`,
+          content: `The question I was asked is: "${question}". My answer was for bucket "${tile.sectionName}", if my response information is relevant to this bucket, please attribute my response information to this bucket. My response is the following: ${text}`,
           role: 'u',
           topicId: selectedTopic.id,
         }),
@@ -121,16 +119,56 @@ export function TileSection({ tile }: TileSectionProps) {
       setInputText('')
       setSelectedOptions([])
 
-      console.log('Before fetchTiles call');
       await fetchTiles();
-      console.log('After fetchTiles call, new tile contents:', {
+      
+      console.log('After fetchTiles call:', {
         tileId: tile.id,
         contentsLength: tile.contents.length,
-        lastContent: tile.contents[tile.contents.length - 1]?.content
+        contents: tile.contents.map(c => ({
+          id: c.id,
+          content: c.content
+        }))
       });
 
     } catch (error) {
       console.error('Error submitting message:', error)
+    }
+  }
+
+  const handleDeleteTile = async () => {
+    if (!selectedTopic || isDeleting) return
+    
+    if (!confirm('Are you sure you want to delete this tile? This action cannot be undone.')) {
+      return
+    }
+
+    setIsDeleting(true)
+    
+    try {
+      console.log('TileSection: Starting tile deletion:', tile.id)
+      
+      const response = await fetch(`/api/counselor/tile/delete?id=${tile.id}`, {
+        method: 'DELETE',
+      })
+
+      console.log('TileSection: Delete response status:', response.status)
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        console.error('TileSection: Server error details:', errorData)
+        throw new Error(`Failed to delete tile: ${errorData.details || 'Unknown error'}`)
+      }
+
+      const data = await response.json()
+      console.log('TileSection: Delete successful:', data)
+
+      // Refresh tiles
+      await fetchTiles()
+    } catch (error) {
+      console.error('TileSection: Error in handleDeleteTile:', error)
+      alert('Failed to delete tile. Please try again.')
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -142,6 +180,14 @@ export function TileSection({ tile }: TileSectionProps) {
           <div className="w-32">
             <UnderstandingMeter level={understanding} />
           </div>
+          <button
+            onClick={handleDeleteTile}
+            className="p-1 hover:bg-gray-200 rounded transition-colors"
+            disabled={isDeleting}
+            aria-label="Delete tile"
+          >
+            <X className="h-4 w-4 text-gray-500 hover:text-red-600" />
+          </button>
         </div>
       </div>
 

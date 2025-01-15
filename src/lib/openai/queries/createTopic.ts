@@ -54,7 +54,7 @@ export async function getCreateTopicResponse(text: string) {
     - <Additional Category 2>
     - <Additional Category 3>
     
-    Use "---END---" as a final delimiter after the list so that it is easy to parse.`
+    Use "---END---" as a final delimiter after the list so that it is easy to parse. Don't wrap the decision summary in quotation marks.`
 
     const mainQuery = `${mainQueryString} The user's decision is: "${text}".`;
     const mainQueryResponse = await getChatResponse(mainQuery, 75, "gpt-4");

@@ -42,10 +42,10 @@ export async function GET(request: Request) {
       })
     }
 
-    // If understanding is already 3, return empty results
-    if (tile.understanding === 3) {
+    // If understanding is already 4, return empty results
+    if (tile.understanding === 4) {
       return new NextResponse(JSON.stringify({
-        understanding: 3,
+        understanding: 4,
         question: "",
         sampleAnswers: []
       }), {

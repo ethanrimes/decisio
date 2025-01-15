@@ -220,3 +220,18 @@ export interface GenerateTileQuestionsResponse {
   question: string;
   sampleAnswers: string[];
 }
+
+export interface LoadingOperation {
+  id: string;
+  message?: string;
+  progress: number; // 0 to 100
+  startTime: number;
+}
+
+export interface LoadingContextType {
+  addLoadingOperation: (id: string, options?: { message?: string }) => void;
+  removeLoadingOperation: (id: string) => void;
+  updateProgress: (id: string, progress: number) => void;
+  isLoading: boolean;
+  currentOperations: LoadingOperation[];
+}

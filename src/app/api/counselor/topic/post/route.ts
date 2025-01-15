@@ -52,10 +52,11 @@ export async function POST(request: Request) {
       if (categories && categories.length > 0) {
         for (const category of categories) {
           try {
-          const tile = await createNewTile(category, dbUser.id, topic.id, []);
-          createdTiles.push(tile);
-        } catch (tileError) {
-          console.error('Error creating tile for category:', category, tileError);
+            const tile = await createNewTile(category, dbUser.id, topic.id, []);
+            createdTiles.push(tile);
+          } catch (tileError) {
+            console.error('Error creating tile for category:', category, tileError);
+          }
         }
       }
 

@@ -20,29 +20,33 @@ async function getUserInputResponse(userResponse: string, topic: string, existin
     3. **User Input:** "${userResponse}"
 
     ### Instructions:
-    1. Parse the user input into concise bullet points.
-    2. Assign each bullet to the most relevant existing bucket if possible.
-    3. If a bullet does not fit into any existing bucket, create a new bucket.
-    4. Avoid redundant information by not duplicating existing bullets or the topic name.
-    5. Prefer assigning bullets to existing buckets over creating new ones.
+    1. Parse the user input into concise bullet points. Do not create empty bullets.
+    2. Do not include bullets that already exist verbatim or with slight rephrasing in the existing buckets. Do not include bullets that rephrase the topic itself (e.g., "Learn how to become a ballerina" for the topic "How can I become a ballerina?").
+    3. Ensure all bullets are specific to the user's input and helpful for achieving the stated goal in Topic. This means do not include irrelevant or generic information (e.g., "My name is David" or general facts about the topic).
+    4. Assign each bullet to the most relevant existing bucket if possible. If a bullet does not fit into any existing bucket, it can be placed in a newly created bucket in the section New Buckets. However, do not create buckets that are similar or identical to existing buckets or some combination of them.
+    5. All bullets must be a full sentence and:
+      - Start with a capital letter.
+      - End with a period.
+      - Be clear, relevant, and avoid redundancy.
+    6. All generated bullets MUST contain information supplied by the user. Do not include output information that is not contained in the user input.
     
     ### Output Format:
     **Section 1:** Existing Buckets
     - {Existing Bucket 1}
-      - Bullet 1
-      - Bullet 2
+      - Full sentence bullet 1.
+      - Full sentence bullet 2.
     - {Existing Bucket 2}
-      - Bullet 3
-      - Bullet 4
+      - Full sentence bullet 3.
+      - Full sentence bullet 4.
     ---END---
     
     **Section 2:** New Buckets
     - {New Bucket Name 1}
-      - Bullet 5
-      - Bullet 6
+      - Full sentence bullet 5.
+      - Full sentence bullet 6.
     - {New Bucket Name 2}
-      - Bullet 7
-      - Bullet 8
+      - Full sentence bullet 7.
+      - Full sentence bullet 8.
     ---END---
   `;
 
