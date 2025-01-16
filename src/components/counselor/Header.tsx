@@ -20,7 +20,7 @@ export function DashboardHeader({ isSidebarOpen, onToggleSidebar }: HeaderProps)
             <Menu className="h-5 w-5" />
           </button>
         )}
-        <h2 className="font-semibold">Dashboard</h2>
+        <h2 className="font-semibold">Decisio</h2>
       </div>
 
       {session?.user && (

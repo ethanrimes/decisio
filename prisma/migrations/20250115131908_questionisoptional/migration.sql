@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Tile" ALTER COLUMN "answerOptions" SET DEFAULT ARRAY[]::TEXT[],
+ALTER COLUMN "question" DROP NOT NULL;

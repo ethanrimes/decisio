@@ -49,6 +49,9 @@ model User {
   image         String?
   accounts      Account[]
   sessions      Session[]
+  topics        Topic[]
+  decisionOptions DecisionOption[]
+  tiles         Tile[]
 }
 
 model VerificationToken {
@@ -57,4 +60,84 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model Tile {
+  id             String        @id @default(uuid())
+  sectionName    String
+  question       String?
+  answerOptions  String[]     @default([])
+  understanding  Int          @default(0)
+  createdAt      DateTime     @default(now())
+  modifiedAt     DateTime     @updatedAt
+  userId         String
+  user           User         @relation(fields: [userId], references: [id])
+  topicId        String
+  topic          Topic        @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  contents       TileContent[]
+
+  @@index([userId])
+  @@index([topicId])
+}
+
+model TileContent {
+  id         String   @id @default(uuid())
+  content    String
+  createdAt  DateTime @default(now())
+  modifiedAt DateTime @updatedAt
+  tileId     String
+  tile       Tile     @relation(fields: [tileId], references: [id], onDelete: Cascade)
+
+  @@unique([content, tileId]) // Ensures `content` is unique per `tileId`
+  @@index([tileId])
+}
+
+model Topic {
+  id            String    @id @default(uuid())
+  fullName      String
+  shortName     String?
+  icon          String    @default("Goal")
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  lastMessageAt DateTime  @default(now())
+  solved        Boolean   @default(false)
+  tiles         Tile[]
+  messages      Message[]
+  decisionOptions DecisionOption[]
+
+  @@index([userId])
+  @@index([lastMessageAt])
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  content   String
+  role      String   // 'u' for user or 'a' for assistant
+  topicId   String
+  topic     Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  metadata  Json?
+
+  @@index([topicId])
+  @@index([createdAt])
+}
+
+model DecisionOption {
+  id                 String    @id @default(uuid())
+  name               String
+  description        String
+  fitReasons         String[]
+  metrics            String[]
+  implementationSteps String[]
+  timeline           String[]
+  topicId            String
+  topic              Topic     @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  status             String    // 'rejected', 'accepted', 'pending'
+  userId             String
+  user               User      @relation(fields: [userId], references: [id])
+
+  @@index([topicId])
+  @@index([userId])
 }
