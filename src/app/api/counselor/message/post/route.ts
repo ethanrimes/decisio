@@ -17,40 +17,38 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { content, role, topicId } = body
 
-    // Post the message to the database
-    const message = await prisma.message.create({
-      data: {
-        content,
-        role,
-        topicId,
-      }
-    })
-
-    // Parse the user input
-    const tiles = await prisma.tile.findMany({
-      where: { topicId },
-      include: { contents: true }
-    })
+    // Post the message to the database and fetch tiles in parallel
+    const [message, tiles] = await Promise.all([
+      prisma.message.create({
+        data: {
+          content,
+          role,
+          topicId,
+        }
+      }),
+      prisma.tile.findMany({
+        where: { topicId },
+        include: { contents: true }
+      })
+    ])
 
     const { patchedTiles, newTiles } = await parseUserInput(content, topicId, tiles)
 
     // Update existing tiles with new content
-    for (const { tile, newContent } of patchedTiles) {
-      for (const content of newContent) {
-        await prisma.tileContent.create({
-          data: {
+    await Promise.all([
+      prisma.tileContent.createMany({
+        data: patchedTiles.flatMap(({ tile, newContent }) => 
+          newContent.map(content => ({
             content: content.content,
             tileId: tile.id,
-          },
-          skipDuplicates: true, // Skips rows that already exist
-        })
-      }
-    }
-
-    // Create new tiles
-    for (const newTile of newTiles) {
-      await createNewTile(newTile.sectionName, user.id, newTile.topicId, newTile.contents)
-    }
+          }))
+        ),
+        skipDuplicates: true, // Skips rows that already exist
+      }),
+      ...newTiles.map(newTile => 
+        createNewTile(newTile.sectionName, user.id, newTile.topicId, newTile.contents)
+      )
+    ]);
 
     return new NextResponse(JSON.stringify(message), {
       status: 200,

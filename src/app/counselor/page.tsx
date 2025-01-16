@@ -1,47 +1,45 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { NotesHeader } from '@/components/counselor/NotesHeader'
 import { TileSection } from '@/components/counselor/TileSection'
-import { OptionSummary } from '@/components/counselor/OptionSummary'
+import { DecisionCard } from '@/components/options/OptionSummary'
 import { Chat } from '@/components/counselor/Chat'
 import { useTopicContext } from './context/TopixContext'
 import { AddTilePopup } from '@/components/counselor/AddTilePopup'
+import { DecisionOptionsProvider, useDecisionOptions } from './context/DecisionOptionContext'
 
-const optionSummaries = [
-  {
-    title: "Option A",
-    description: "Tech Startup in San Francisco",
-    metrics: [
-      { label: "Salary Range", value: "$120k-150k" },
-      { label: "Work-Life Balance", value: "8/10" },
-      { label: "Growth Potential", value: "High" },
-    ]
-  },
-  {
-    title: "Option B",
-    description: "Enterprise Company in NYC",
-    metrics: [
-      { label: "Salary Range", value: "$140k-170k" },
-      { label: "Work-Life Balance", value: "7/10" },
-      { label: "Growth Potential", value: "Medium" },
-    ]
-  },
-  {
-    title: "Option C",
-    description: "Remote Consulting Firm",
-    metrics: [
-      { label: "Salary Range", value: "$110k-140k" },
-      { label: "Work-Life Balance", value: "9/10" },
-      { label: "Growth Potential", value: "Medium-High" },
-    ]
-  }
-]
-
-export default function CounselorPage() {
+function CounselorPageContent() {
   const [activeView, setActiveView] = useState<'details' | 'options'>('details')
   const { tiles, isLoading, error, fetchTiles, selectedTopic } = useTopicContext()
   const [isAddTileOpen, setIsAddTileOpen] = useState(false)
+  const [isGeneratingOptions, setIsGeneratingOptions] = useState(false)
+  const { decisionOptions, generateNewOption, fetchDecisionOptions } = useDecisionOptions()
+
+  // Fetch existing decision options when topic changes
+  useEffect(() => {
+    if (selectedTopic?.id) {
+      fetchDecisionOptions()
+    }
+  }, [selectedTopic?.id, fetchDecisionOptions])
+
+  const generateThreeOptions = async () => {
+    setIsGeneratingOptions(true)
+    try {
+      await Promise.all([
+        generateNewOption(),
+        generateNewOption(),
+        generateNewOption()
+      ])
+    } finally {
+      setIsGeneratingOptions(false)
+    }
+  }
+
+  const handleStatusChange = async (id: string, status: 'accepted' | 'rejected', reason?: string) => {
+    // Existing status change handling logic
+    console.log('Status change:', id, status, reason)
+  }
 
   const handleAddTile = async ({ sectionName, content }: { sectionName: string, content: string[] }) => {
     try {
@@ -62,6 +60,7 @@ export default function CounselorPage() {
       }
 
       await fetchTiles()
+      setIsAddTileOpen(false)
     } catch (error) {
       console.error('Error creating tile:', error)
     }
@@ -76,7 +75,6 @@ export default function CounselorPage() {
             onViewChange={setActiveView}
           />
         </div>
-
         <div className="p-6 flex flex-col h-[calc(100vh-4rem)]">
           {/* Details View */}
           <div className={`${activeView === 'details' ? 'flex flex-col flex-1' : 'hidden'}`}>
@@ -113,16 +111,27 @@ export default function CounselorPage() {
           {/* Options View */}
           <div className={`${activeView === 'options' ? 'block' : 'hidden'}`}>
             <div className="h-[calc(100vh-10rem)] overflow-y-auto">
-              <div className="grid grid-cols-3 gap-6">
-                {optionSummaries.map((option, index) => (
-                  <OptionSummary
-                    key={index}
-                    title={option.title}
-                    description={option.description}
-                    metrics={option.metrics}
-                  />
-                ))}
-              </div>
+              {decisionOptions.length === 0 ? (
+                <div className="text-center py-8">
+                  <button
+                    onClick={generateThreeOptions}
+                    disabled={isGeneratingOptions}
+                    className="px-4 py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 transition-colors disabled:bg-gray-400"
+                  >
+                    {isGeneratingOptions ? 'Generating Options...' : 'Generate Options'}
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {decisionOptions.map((option) => (
+                    <DecisionCard 
+                      key={option.id} 
+                      option={option}
+                      onStatusChange={handleStatusChange}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -139,5 +148,15 @@ export default function CounselorPage() {
         onSubmit={handleAddTile}
       />
     </div>
+  )
+}
+
+export default function CounselorPage() {
+  const { selectedTopic } = useTopicContext()
+  
+  return (
+    <DecisionOptionsProvider selectedTopicId={selectedTopic?.id}>
+      <CounselorPageContent />
+    </DecisionOptionsProvider>
   )
 }

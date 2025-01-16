@@ -11,7 +11,7 @@ async function getUserInputResponse(userResponse: string, topic: string, existin
   const formattedBuckets = formatBuckets(existingBuckets);
 
   const prompt = `
-    You are parsing user input and organizing it into structured categories.
+    You are summarising user input and organizing it into categories.
 
     ### Input:
     1. **Topic:** "${topic}"
@@ -20,15 +20,30 @@ async function getUserInputResponse(userResponse: string, topic: string, existin
     3. **User Input:** "${userResponse}"
 
     ### Instructions:
-    1. Parse the user input into concise bullet points. Do not create empty bullets.
-    2. Do not include bullets that already exist verbatim or with slight rephrasing in the existing buckets. Do not include bullets that rephrase the topic itself (e.g., "Learn how to become a ballerina" for the topic "How can I become a ballerina?").
-    3. Ensure all bullets are specific to the user's input and helpful for achieving the stated goal in Topic. This means do not include irrelevant or generic information (e.g., "My name is David" or general facts about the topic).
-    4. Assign each bullet to the most relevant existing bucket if possible. If a bullet does not fit into any existing bucket, it can be placed in a newly created bucket in the section New Buckets. However, do not create buckets that are similar or identical to existing buckets or some combination of them.
+    1.	Use Only Provided Information:
+	  - All bullet points must be directly derived only from the user input.
+	  - Do not speculate, infer, or add information not explicitly stated in the user input. For example, avoid creating bullets like “Consider whether increasing gum chewing will affect your daily habits or routines” unless the input explicitly mentions daily habits.
+	2.	Parse into Bullet Points:
+	  - Create concise, full-sentence bullet points directly relevant to the user's input.
+	  - Avoid empty bullets or those that rephrase the topic itself. For example, for the topic “How can I become a ballerina?” avoid creating bullets like “Learn how to become a ballerina.”
+	3.	Avoid Redundancy:
+	  - Strictly do not include bullets that already exist verbatim or with slight rephrasing in the existing buckets.
+	4.	Organize into Buckets:
+	  - Assign each bullet to the most relevant existing bucket.
+	  - If a bullet does not fit into an existing bucket, place it in a new bucket under the section “New Buckets.”
+	  - Strictly do not create new buckets that duplicate existing ones or combine them.
     5. All bullets must be a full sentence and:
       - Start with a capital letter.
       - End with a period.
       - Be clear, relevant, and avoid redundancy.
     6. All generated bullets MUST contain information supplied by the user. Do not include output information that is not contained in the user input.
+
+    ### Examples of Allowed and Disallowed Outputs:
+    Allowed:
+      - If the input states, “I enjoy solving complex problems, working in teams, and learning new technologies” you can generate: “I enjoy learning new technologies.”
+    Disallowed:
+      - Speculating or adding unrelated information: “I enjoy music and reading."
+      - Answers to the topic question or analysis: "Evaluate the potential health risks of chewing more gum." or "Chewing gum may help improve focus."
     
     ### Output Format:
     **Section 1:** Existing Buckets

@@ -228,7 +228,7 @@ export interface LoadingContextType {
   currentOperations: LoadingOperation[];
 }
 
-export type DecisionOption = {
+export interface DecisionOption {
   id: string;
   name?: string;
   description?: string;
@@ -237,11 +237,10 @@ export type DecisionOption = {
   implementationSteps?: string[];
   timeline?: string[];
   topicId: string;
-};
+  status?: 'pending' | 'accepted' | 'rejected';
+}
 
-export interface BulletStyleInputProps {
-  onSubmit: (bullets: string[]) => void;
-  initialBullets?: string[];
-  onBulletsChange: (bullets: string[]) => void;
-  placeholder?: string;
+export interface DecisionCardProps {
+  option: DecisionOption;
+  onStatusChange?: (id: string, status: 'accepted' | 'rejected') => void;
 }

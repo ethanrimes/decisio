@@ -31,7 +31,7 @@ export function BulletStyleInputComponent({
   }, [initialBullets]);
 
   const handleAddBullet = () => {
-    const newInputs = [...currentInputs, ' a'];
+    const newInputs = [...currentInputs, 'Enter your response...'];
     console.log('Adding new bullet:', newInputs);
     setCurrentInputs(newInputs);
     onBulletsChange(newInputs.filter(input => input.trim() !== ''));
